@@ -277,10 +277,78 @@
   .detail-table th, .detail-table td { padding: 8px 10px; font-size: 13px; }
 
   @media (max-width: 600px) {
-    .item-row { grid-template-columns: 1fr 1fr; }
-    .item-row > .barang-wrap { grid-column: span 2; }
-    .item-row > *:last-child { grid-column: span 2; }
+    .item-head { display: none; }                 /* label kolom disembunyikan, pakai placeholder */
+    .item-row {
+      grid-template-columns: 64px 1fr auto;       /* Qty | Harga | tombol hapus */
+      gap: 8px;
+      padding: 10px;
+      margin-bottom: 12px;
+      background: #f7f9fc;
+      border: 1px solid #e3e8ef;
+      border-radius: 9px;
+    }
+    .item-row > .barang-wrap { grid-column: 1 / -1; }   /* barang penuh di atas */
+    .item-row input { padding: 9px 10px; font-size: 14px; }
+    .item-row .btn-icon { padding: 8px 11px; }
     header h1 { font-size: 16px; }
+    header { padding: 12px 14px; }
+    header > div { gap: 8px; }
+    #live-date { display: none; }                 /* hemat ruang di HP */
+    .page { padding: 14px; }
+    .card { padding: 16px; }
+
+    /* Cegah iOS auto-zoom saat fokus input: font minimal 16px */
+    input, select, textarea,
+    .form-group input, .form-group select,
+    .item-row input, .search-input, .filter-select,
+    .login-box input, .barang-input { font-size: 16px; }
+
+    /* Tab bisa di-scroll, tidak terpotong */
+    .tabs { padding: 0 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tab-btn { padding: 12px 14px; font-size: 13px; white-space: nowrap; }
+
+    /* Toolbar daftar order: tiap kontrol satu baris penuh */
+    .table-toolbar { flex-direction: column; align-items: stretch; }
+    .table-toolbar .search-input,
+    .table-toolbar .filter-select,
+    .table-toolbar .btn { width: 100%; min-width: 0; }
+
+    /* Ringkasan: 1 kolom besar yang mudah dibaca */
+    .summary-grid { grid-template-columns: 1fr; gap: 10px; }
+    .summary-card { padding: 14px 16px; }
+
+    /* Tabel daftar order -> kartu (tanpa scroll samping) */
+    .table-wrap { overflow: visible; }
+    .orders-table thead { display: none; }
+    .orders-table, .orders-table tbody, .orders-table tr, .orders-table td { display: block; width: 100%; }
+    .orders-table tr {
+      background: #fff; border: 1px solid #e3e8ef; border-radius: 10px;
+      margin-bottom: 12px; padding: 10px 14px;
+    }
+    .orders-table td {
+      border: none; padding: 6px 0; display: flex;
+      justify-content: space-between; align-items: center; gap: 12px;
+      font-size: 14px;
+    }
+    .orders-table td::before {
+      content: attr(data-label); color: #888; font-weight: 600;
+      font-size: 12px; flex-shrink: 0;
+    }
+    .orders-table td.row-actions { display: flex; gap: 8px; padding-top: 10px; }
+    .orders-table td.row-actions::before { display: none; }
+    .orders-table td.row-actions .btn { flex: 1; padding: 10px; }
+
+    /* Modal detail muat layar HP */
+    .modal { width: 94%; padding: 18px; max-height: 86vh; }
+    .modal-actions { flex-wrap: wrap; }
+    .modal-actions .btn { flex: 1; }
+
+    /* Tombol form aksi (Reset/Simpan) lebih mudah di-tap */
+    .form-actions { flex-direction: column-reverse; }
+    .form-actions .btn { width: 100%; padding: 13px; }
+
+    /* Pengaturan: kartu menumpuk 1 kolom */
+    .admin-grid { grid-template-columns: 1fr !important; }
   }
 
   .toast {
@@ -388,7 +456,7 @@
 
     <div class="items-section">
       <h3>Detail Barang</h3>
-      <div class="item-row" style="margin-bottom:6px;">
+      <div class="item-row item-head" style="margin-bottom:6px;">
         <span style="font-size:12px;color:#888;font-weight:600;">BARANG</span>
         <span style="font-size:12px;color:#888;font-weight:600;">QTY</span>
         <span style="font-size:12px;color:#888;font-weight:600;">HARGA (Rp)</span>
@@ -439,7 +507,7 @@
       <button class="btn btn-outline btn-sm" id="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
     </div>
     <div class="table-wrap">
-      <table>
+      <table class="orders-table">
         <thead>
           <tr>
             <th>No. Order</th>
@@ -459,7 +527,7 @@
 
 <!-- PAGE: ADMIN -->
 <div class="page" id="page-admin">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;flex-wrap:wrap;">
+  <div class="admin-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
     <div class="card">
       <h2>Akun Pengguna (Sales & Admin)</h2>
       <div class="list-manage" id="users-list"></div>
@@ -888,13 +956,13 @@ function filterOrders() {
   }
   tbody.innerHTML = filtered.map(o => `
     <tr>
-      <td><b>${o.no}</b></td>
-      <td>${o.date}</td>
-      <td>${o.sales}</td>
-      <td>${o.customer}</td>
-      <td>${o.items.length} item(s)</td>
-      <td><b>${formatRp(o.total)}</b></td>
-      <td style="white-space:nowrap;">
+      <td data-label="No. Order"><b>${o.no}</b></td>
+      <td data-label="Tanggal">${o.date}</td>
+      <td data-label="Sales">${o.sales}</td>
+      <td data-label="Pelanggan">${o.customer}</td>
+      <td data-label="Item">${o.items.length} item(s)</td>
+      <td data-label="Total"><b>${formatRp(o.total)}</b></td>
+      <td data-label="Aksi" class="row-actions">
         <button class="btn btn-outline btn-sm" onclick="showDetail('${o.no}')">Detail</button>
         <button class="btn btn-primary btn-sm" onclick="editOrder('${o.no}')">Edit</button>
       </td>
