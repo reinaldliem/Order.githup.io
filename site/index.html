@@ -719,6 +719,7 @@ function addItemRow() {
   div.innerHTML = `
     <div class="barang-wrap">
       <input class="barang-input" placeholder="Pilih / ketik barang" autocomplete="off"
+             autocorrect="off" autocapitalize="off" spellcheck="false"
              oninput="onBarangInput(this)" onfocus="onBarangInput(this)" onblur="hideBarangDrop(this)">
       <div class="barang-drop"></div>
     </div>
