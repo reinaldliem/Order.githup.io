@@ -527,33 +527,26 @@
 
 <!-- PAGE: ADMIN -->
 <div class="page" id="page-admin">
-  <div class="admin-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-    <div class="card">
-      <h2>Akun Pengguna (Sales & Admin)</h2>
-      <div class="list-manage" id="users-list"></div>
-      <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <input type="text" id="new-user-id" placeholder="ID (nama login)" style="padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;">
-        <input type="text" id="new-user-pin" placeholder="PIN" inputmode="numeric" style="padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;">
-        <select id="new-user-role" style="padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;">
-          <option value="sales">Sales</option>
-          <option value="admin">Admin</option>
-        </select>
-        <button class="btn btn-primary" onclick="addUser()">Tambah Akun</button>
-      </div>
-    </div>
-    <div class="card">
-      <h2>Daftar Barang</h2>
-      <div class="list-manage" id="barang-list"></div>
-      <div class="add-item-row">
-        <input type="text" id="new-barang" placeholder="Nama barang baru...">
-        <button class="btn btn-primary" onclick="addBarang()">Tambah</button>
-      </div>
+  <div class="card">
+    <h2>Akun Pengguna (Sales & Admin)</h2>
+    <div class="list-manage" id="users-list"></div>
+    <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <input type="text" id="new-user-id" placeholder="ID (nama login)" style="padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;">
+      <input type="text" id="new-user-pin" placeholder="PIN" inputmode="numeric" style="padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;">
+      <select id="new-user-role" style="padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;">
+        <option value="sales">Sales</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button class="btn btn-primary" onclick="addUser()">Tambah Akun</button>
     </div>
   </div>
-  <div class="card" style="margin-top:0;">
-    <h2>Pengaturan Harga Default Barang</h2>
-    <p style="font-size:13px;color:#888;margin-bottom:12px;">Harga default akan otomatis terisi saat memilih barang di form order.</p>
-    <div id="price-list"></div>
+  <div class="card">
+    <h2>Daftar Barang & Harga</h2>
+    <p style="font-size:14px;color:#666;line-height:1.6;margin:0;">
+      Daftar barang dan harga dikelola langsung di <b>Google Sheet</b>, pada tab <b>“Barang”</b>
+      (kolom: Nama Barang | Harga). Tambah/ubah/hapus baris di sheet, lalu perubahan otomatis
+      terbaca di website saat sales login berikutnya atau setelah menyimpan order.
+    </p>
   </div>
 </div>
 
@@ -1037,12 +1030,6 @@ async function deleteCurrentOrder() {
 
 function renderAdmin() {
   renderUsersList();
-  renderBarangList();
-  renderPriceList();
-}
-
-async function saveConfig(key, value) {
-  await apiPost({ action: 'setConfig', key, value });
 }
 
 function renderUsersList() {
@@ -1083,59 +1070,6 @@ async function removeUser(id) {
     renderUsersList();
     showToast('Akun dihapus.');
   } catch (e) { showToast('Gagal menghapus akun!', 'error'); console.error(e); }
-}
-
-function renderBarangList() {
-  document.getElementById('barang-list').innerHTML = barangList.map(b => `
-    <div class="list-item">
-      <span>${b}</span>
-      <button class="btn btn-danger btn-sm" onclick="removeBarang('${b.replace(/'/g,"\\'")}')">Hapus</button>
-    </div>
-  `).join('') || '<p style="color:#999;font-size:13px;">Belum ada data</p>';
-}
-
-async function addBarang() {
-  const v = document.getElementById('new-barang').value.trim();
-  if (!v) return;
-  if (barangList.includes(v)) { showToast('Barang sudah ada!', 'error'); return; }
-  barangList.push(v);
-  await saveConfig('barangList', barangList);
-  document.getElementById('new-barang').value = '';
-  renderBarangList();
-  renderPriceList();
-  showToast('Barang ditambahkan!');
-}
-
-async function removeBarang(name) {
-  if (!confirm('Hapus barang ' + name + '?')) return;
-  barangList = barangList.filter(b => b !== name);
-  await saveConfig('barangList', barangList);
-  renderBarangList();
-  renderPriceList();
-}
-
-function renderPriceList() {
-  document.getElementById('price-list').innerHTML = barangList.map(b => `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-      <span style="flex:1;font-size:14px;">${b}</span>
-      <input type="number" min="0" placeholder="Harga default"
-        value="${priceMap[b] || ''}"
-        style="width:160px;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;"
-        oninput="updatePrice('${b}', this.value)">
-    </div>
-  `).join('') || '<p style="color:#999;font-size:13px;">Tambahkan barang terlebih dahulu.</p>';
-}
-
-let priceSaveTimer = null;
-function updatePrice(barang, val) {
-  if (val) priceMap[barang] = parseFloat(val);
-  else delete priceMap[barang];
-  clearTimeout(priceSaveTimer);
-  priceSaveTimer = setTimeout(() => {
-    saveConfig('priceMap', priceMap).catch(e => {
-      showToast('Gagal menyimpan harga!', 'error'); console.error(e);
-    });
-  }, 600);
 }
 
 function exportCSV() {
