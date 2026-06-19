@@ -91,6 +91,24 @@
   }
   .item-row input:focus, .item-row select:focus { outline: none; border-color: #1e3a5f; }
 
+  /* Dropdown barang (pencarian, ramah HP) */
+  .barang-wrap { position: relative; }
+  .barang-wrap input { width: 100%; }
+  .barang-drop {
+    display: none; position: absolute; top: calc(100% + 2px); left: 0; right: 0; z-index: 60;
+    background: #fff; border: 1.5px solid #1e3a5f; border-radius: 8px;
+    max-height: 260px; overflow-y: auto; box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    -webkit-overflow-scrolling: touch;
+  }
+  .barang-opt {
+    padding: 12px 13px; font-size: 14px; cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .barang-opt:last-child { border-bottom: none; }
+  .barang-opt:hover, .barang-opt.active { background: #e8f0fe; }
+  .barang-opt .op { color: #1e3a5f; font-weight: 600; font-size: 13px; float: right; }
+  .barang-opt-empty { padding: 12px 13px; font-size: 13px; color: #999; }
+
   .btn {
     padding: 10px 18px;
     border: none;
@@ -260,6 +278,7 @@
 
   @media (max-width: 600px) {
     .item-row { grid-template-columns: 1fr 1fr; }
+    .item-row > .barang-wrap { grid-column: span 2; }
     .item-row > *:last-child { grid-column: span 2; }
     header h1 { font-size: 16px; }
   }
@@ -376,7 +395,6 @@
         <span></span>
       </div>
       <div id="items-container"></div>
-      <datalist id="barang-options"></datalist>
       <button class="btn-add-row" onclick="addItemRow()">+ Tambah Barang</button>
     </div>
 
@@ -699,7 +717,12 @@ function addItemRow() {
   div.id = id;
 
   div.innerHTML = `
-    <input list="barang-options" class="barang-input" placeholder="Pilih / ketik barang" onchange="onBarangChange(this, '${id}')">
+    <div class="barang-wrap">
+      <input class="barang-input" placeholder="Pilih / ketik barang" autocomplete="off"
+             autocorrect="off" autocapitalize="off" spellcheck="false"
+             oninput="onBarangInput(this)" onfocus="onBarangInput(this)" onblur="hideBarangDrop(this)">
+      <div class="barang-drop"></div>
+    </div>
     <input type="number" min="1" value="1" placeholder="Qty" oninput="calcTotal()">
     <input type="number" min="0" value="0" placeholder="Harga" oninput="calcTotal()">
     <button class="btn btn-danger btn-icon" onclick="removeRow('${id}')">✕</button>
@@ -708,20 +731,68 @@ function addItemRow() {
   calcTotal();
 }
 
-function onBarangChange(inp, rowId) {
-  const row = document.getElementById(rowId);
-  const barang = inp.value.trim();
-  const priceInput = row.querySelectorAll('input[type=number]')[1];
-  if (barang && priceMap[barang] && (!priceInput.value || priceInput.value === '0')) {
-    priceInput.value = priceMap[barang];
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Tampilkan/filter daftar barang saat mengetik (dropdown tappable, ramah HP) */
+function onBarangInput(inp) {
+  const drop = inp.parentElement.querySelector('.barang-drop');
+  const q = inp.value.trim().toLowerCase();
+  let list;
+  if (!q) {
+    list = barangList.slice();
+  } else {
+    const words = q.split(/\s+/);                       // dukung beberapa kata
+    list = barangList
+      .map(b => {
+        const lb = b.toLowerCase();
+        if (!words.every(w => lb.includes(w))) return null;   // harus mengandung semua kata
+        // skor: diawali query = paling atas, lalu makin awal posisi cocok makin atas
+        let score = lb.startsWith(q) ? 0 : (lb.includes(q) ? 1 : 2);
+        score = score * 1000 + lb.indexOf(words[0]);
+        return { b, score };
+      })
+      .filter(Boolean)
+      .sort((a, c) => a.score - c.score || a.b.localeCompare(c.b))
+      .map(x => x.b);
   }
+  const shown = list.slice(0, 60);
+  if (!shown.length) {
+    drop.innerHTML = '<div class="barang-opt-empty">Tidak ada barang cocok. Ketik untuk barang baru.</div>';
+    drop.style.display = 'block';
+    return;
+  }
+  drop.innerHTML = shown.map(b => {
+    const harga = priceMap[b] ? '<span class="op">' + formatRp(priceMap[b]) + '</span>' : '';
+    return `<div class="barang-opt" data-name="${esc(b)}" onmousedown="pickBarang(event, this)">${esc(b)}${harga}</div>`;
+  }).join('');
+  if (list.length > 60) drop.innerHTML += '<div class="barang-opt-empty">… ketik untuk mempersempit pencarian</div>';
+  drop.style.display = 'block';
+}
+
+function pickBarang(ev, el) {
+  ev.preventDefault();   // jangan sampai input kehilangan fokus sebelum nilai diset
+  const wrap = el.closest('.barang-wrap');
+  const inp = wrap.querySelector('.barang-input');
+  const name = el.getAttribute('data-name');
+  inp.value = name;
+  wrap.querySelector('.barang-drop').style.display = 'none';
+  const row = wrap.closest('.item-row');
+  const priceInput = row.querySelectorAll('input[type=number]')[1];
+  if (priceMap[name] && (!priceInput.value || priceInput.value === '0')) priceInput.value = priceMap[name];
   calcTotal();
 }
 
-function refreshBarangOptions() {
-  document.getElementById('barang-options').innerHTML =
-    barangList.map(b => `<option value="${b}">`).join('');
+function hideBarangDrop(inp) {
+  // beri jeda agar tap pada opsi sempat terproses
+  setTimeout(() => {
+    const drop = inp.parentElement.querySelector('.barang-drop');
+    if (drop) drop.style.display = 'none';
+  }, 200);
 }
+
+function refreshBarangOptions() { /* tidak dipakai lagi (dropdown custom) */ }
 
 function removeRow(id) {
   const el = document.getElementById(id);
