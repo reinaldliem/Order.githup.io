@@ -502,11 +502,14 @@
     <div class="table-toolbar">
       <select class="filter-select" id="filter-period" onchange="onPeriodChange()">
         <option value="harian">Harian</option>
-        <option value="mingguan">Mingguan</option>
+        <option value="mingguan">Mingguan (rentang)</option>
         <option value="bulanan">Bulanan</option>
         <option value="semua">Semua</option>
       </select>
-      <input type="date" class="filter-select" id="filter-date" onchange="filterOrders()">
+      <input type="date" class="filter-select" id="filter-date" onchange="filterOrders()" title="Tanggal / Dari">
+      <span id="filter-sd" style="display:none;align-self:center;color:#666;font-size:13px;">s/d</span>
+      <input type="date" class="filter-select" id="filter-date2" onchange="filterOrders()" title="Sampai" style="display:none;">
+      <input type="month" class="filter-select" id="filter-month" onchange="filterOrders()" style="display:none;">
       <input class="search-input" type="text" placeholder="Cari no. order, pelanggan, sales..." oninput="filterOrders()">
       <select class="filter-select" onchange="filterOrders()" id="filter-sales">
         <option value="">Semua Sales</option>
@@ -939,13 +942,30 @@ function renderOrderList() {
   sel.innerHTML = '<option value="">Semua Sales</option>';
   salesList.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
   if (!document.getElementById('filter-date').value) document.getElementById('filter-date').value = todayKey();
-  filterOrders();
+  if (!document.getElementById('filter-month').value) document.getElementById('filter-month').value = todayKey().slice(0, 7);
+  onPeriodChange();
 }
 
+function addDaysKey(key, n) {
+  const d = new Date(key + 'T00:00:00'); d.setDate(d.getDate() + n); return keyOf(d);
+}
+
+// Tampilkan kontrol tanggal sesuai periode
 function onPeriodChange() {
-  // "Semua" tidak butuh tanggal acuan
-  const semua = document.getElementById('filter-period').value === 'semua';
-  document.getElementById('filter-date').style.display = semua ? 'none' : '';
+  const period = document.getElementById('filter-period').value;
+  const date1 = document.getElementById('filter-date');
+  const sd = document.getElementById('filter-sd');
+  const date2 = document.getElementById('filter-date2');
+  const month = document.getElementById('filter-month');
+  date1.style.display = (period === 'harian' || period === 'mingguan') ? '' : 'none';
+  sd.style.display = (period === 'mingguan') ? '' : 'none';
+  date2.style.display = (period === 'mingguan') ? '' : 'none';
+  month.style.display = (period === 'bulanan') ? '' : 'none';
+  // Saat pindah ke Mingguan, isi default "Sampai" = Dari + 6 hari (7 hari) bila kosong
+  if (period === 'mingguan') {
+    if (!date1.value) date1.value = todayKey();
+    if (!date2.value) date2.value = addDaysKey(date1.value, 6);
+  }
   filterOrders();
 }
 
@@ -953,24 +973,24 @@ function keyOf(dt) {
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 }
 
-// Rentang tanggal aktif berdasarkan periode + tanggal acuan
+// Rentang tanggal aktif berdasarkan periode
 function periodRange() {
   const period = document.getElementById('filter-period').value;
   if (period === 'semua') return null;
-  const anchor = document.getElementById('filter-date').value || todayKey();
-  const d = new Date(anchor + 'T00:00:00');
-  let start, end;
   if (period === 'harian') {
-    start = new Date(d); end = new Date(d);
-  } else if (period === 'mingguan') {
-    const dow = (d.getDay() + 6) % 7;            // Senin = 0
-    start = new Date(d); start.setDate(d.getDate() - dow);
-    end = new Date(start); end.setDate(start.getDate() + 6);
-  } else {                                       // bulanan
-    start = new Date(d.getFullYear(), d.getMonth(), 1);
-    end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    const k = document.getElementById('filter-date').value || todayKey();
+    return { startKey: k, endKey: k };
   }
-  return { startKey: keyOf(start), endKey: keyOf(end) };
+  if (period === 'mingguan') {
+    let a = document.getElementById('filter-date').value || todayKey();
+    let b = document.getElementById('filter-date2').value || addDaysKey(a, 6);
+    if (b < a) { const t = a; a = b; b = t; }      // tukar bila terbalik
+    return { startKey: a, endKey: b };
+  }
+  // bulanan: dari input bulan (YYYY-MM)
+  const m = document.getElementById('filter-month').value || todayKey().slice(0, 7);
+  const [y, mo] = m.split('-').map(Number);
+  return { startKey: keyOf(new Date(y, mo - 1, 1)), endKey: keyOf(new Date(y, mo, 0)) };
 }
 
 function inPeriod(o) {
@@ -990,9 +1010,13 @@ function periodLabel() {
   if (period === 'semua') return 'semua waktu';
   const r = periodRange();
   if (period === 'harian') return shortDate(r.startKey);
-  if (period === 'mingguan') return `${shortDate(r.startKey)} – ${shortDate(r.endKey)}`;
-  const d = new Date((document.getElementById('filter-date').value || todayKey()) + 'T00:00:00');
-  return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  if (period === 'mingguan') {
+    const days = Math.round((new Date(r.endKey) - new Date(r.startKey)) / 86400000) + 1;
+    return `${shortDate(r.startKey)} – ${shortDate(r.endKey)} (${days} hari)`;
+  }
+  const m = document.getElementById('filter-month').value || todayKey().slice(0, 7);
+  const [y, mo] = m.split('-').map(Number);
+  return `${MONTHS[mo - 1]} ${y}`;
 }
 
 function filterOrders() {
