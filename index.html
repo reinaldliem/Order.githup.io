@@ -482,24 +482,31 @@
 <div class="page" id="page-list">
   <div class="summary-grid">
     <div class="summary-card">
-      <div class="label">Total Order</div>
+      <div class="label">Jumlah Order</div>
       <div class="value" id="sum-total">0</div>
-      <div class="sub">semua order</div>
+      <div class="sub" id="sum-sub1">hari ini</div>
     </div>
     <div class="summary-card">
       <div class="label">Nilai Order</div>
       <div class="value" id="sum-value">Rp 0</div>
-      <div class="sub">total nilai</div>
+      <div class="sub" id="sum-sub2">hari ini</div>
     </div>
     <div class="summary-card">
-      <div class="label">Hari Ini</div>
-      <div class="value" id="sum-today">0</div>
-      <div class="sub">order hari ini</div>
+      <div class="label">Rata-rata / Order</div>
+      <div class="value" id="sum-avg">Rp 0</div>
+      <div class="sub" id="sum-sub3">hari ini</div>
     </div>
   </div>
 
   <div class="card">
     <div class="table-toolbar">
+      <select class="filter-select" id="filter-period" onchange="onPeriodChange()">
+        <option value="harian">Harian</option>
+        <option value="mingguan">Mingguan</option>
+        <option value="bulanan">Bulanan</option>
+        <option value="semua">Semua</option>
+      </select>
+      <input type="date" class="filter-select" id="filter-date" onchange="filterOrders()">
       <input class="search-input" type="text" placeholder="Cari no. order, pelanggan, sales..." oninput="filterOrders()">
       <select class="filter-select" onchange="filterOrders()" id="filter-sales">
         <option value="">Semua Sales</option>
@@ -928,23 +935,79 @@ async function saveOrder() {
 function resetForm() { initForm(); }
 
 function renderOrderList() {
-  updateSummary();
   const sel = document.getElementById('filter-sales');
   sel.innerHTML = '<option value="">Semua Sales</option>';
   salesList.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+  if (!document.getElementById('filter-date').value) document.getElementById('filter-date').value = todayKey();
   filterOrders();
+}
+
+function onPeriodChange() {
+  // "Semua" tidak butuh tanggal acuan
+  const semua = document.getElementById('filter-period').value === 'semua';
+  document.getElementById('filter-date').style.display = semua ? 'none' : '';
+  filterOrders();
+}
+
+function keyOf(dt) {
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+
+// Rentang tanggal aktif berdasarkan periode + tanggal acuan
+function periodRange() {
+  const period = document.getElementById('filter-period').value;
+  if (period === 'semua') return null;
+  const anchor = document.getElementById('filter-date').value || todayKey();
+  const d = new Date(anchor + 'T00:00:00');
+  let start, end;
+  if (period === 'harian') {
+    start = new Date(d); end = new Date(d);
+  } else if (period === 'mingguan') {
+    const dow = (d.getDay() + 6) % 7;            // Senin = 0
+    start = new Date(d); start.setDate(d.getDate() - dow);
+    end = new Date(start); end.setDate(start.getDate() + 6);
+  } else {                                       // bulanan
+    start = new Date(d.getFullYear(), d.getMonth(), 1);
+    end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  }
+  return { startKey: keyOf(start), endKey: keyOf(end) };
+}
+
+function inPeriod(o) {
+  const r = periodRange();
+  if (!r) return true;
+  const k = (o.dateKey || '').slice(0, 10);
+  return k >= r.startKey && k <= r.endKey;
+}
+
+function shortDate(key) {
+  const d = new Date(key + 'T00:00:00');
+  return `${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)} ${d.getFullYear()}`;
+}
+
+function periodLabel() {
+  const period = document.getElementById('filter-period').value;
+  if (period === 'semua') return 'semua waktu';
+  const r = periodRange();
+  if (period === 'harian') return shortDate(r.startKey);
+  if (period === 'mingguan') return `${shortDate(r.startKey)} – ${shortDate(r.endKey)}`;
+  const d = new Date((document.getElementById('filter-date').value || todayKey()) + 'T00:00:00');
+  return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 function filterOrders() {
   const q = document.querySelector('.search-input').value.toLowerCase();
   const sf = document.getElementById('filter-sales').value;
-  const filtered = orders.filter(o =>
-    (o.no.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q) || o.sales.toLowerCase().includes(q)) &&
-    (!sf || o.sales === sf)
+  // Dasar: periode + sales (dipakai untuk ringkasan)
+  const base = orders.filter(o => inPeriod(o) && (!sf || o.sales === sf));
+  updateSummary(base);
+  // Tabel: tambahan pencarian teks
+  const filtered = base.filter(o =>
+    o.no.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q) || o.sales.toLowerCase().includes(q)
   );
   const tbody = document.getElementById('orders-tbody');
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="no-data">Tidak ada order ditemukan</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="no-data">Tidak ada order pada periode ini</td></tr>`;
     return;
   }
   tbody.innerHTML = filtered.map(o => `
@@ -963,11 +1026,18 @@ function filterOrders() {
   `).join('');
 }
 
-function updateSummary() {
-  const todayK = todayKey();
-  document.getElementById('sum-total').textContent = orders.length;
-  document.getElementById('sum-value').textContent = formatRp(orders.reduce((s, o) => s + o.total, 0));
-  document.getElementById('sum-today').textContent = orders.filter(o => o.dateKey === todayK).length;
+function updateSummary(list) {
+  list = list || orders;
+  const count = list.length;
+  const total = list.reduce((s, o) => s + (Number(o.total) || 0), 0);
+  const avg = count ? Math.round(total / count) : 0;
+  document.getElementById('sum-total').textContent = count;
+  document.getElementById('sum-value').textContent = formatRp(total);
+  document.getElementById('sum-avg').textContent = formatRp(avg);
+  const lbl = periodLabel();
+  document.getElementById('sum-sub1').textContent = lbl;
+  document.getElementById('sum-sub2').textContent = lbl;
+  document.getElementById('sum-sub3').textContent = lbl;
 }
 
 function showDetail(no) {
@@ -1074,7 +1144,9 @@ async function removeUser(id) {
 
 function exportCSV() {
   if (!isAdmin()) { showToast('Hanya admin yang bisa export.', 'error'); return; }
-  if (!orders.length) { showToast('Tidak ada data untuk diexport!', 'error'); return; }
+  const sf = document.getElementById('filter-sales').value;
+  const data = orders.filter(o => inPeriod(o) && (!sf || o.sales === sf));  // ikut periode terpilih
+  if (!data.length) { showToast('Tidak ada data pada periode ini!', 'error'); return; }
   const SEP = ';';                          // pemisah kolom untuk Excel Indonesia
   const cell = v => {
     let s = (v === null || v === undefined) ? '' : String(v);
@@ -1083,7 +1155,7 @@ function exportCSV() {
   };
   const headers = ['No. Order', 'Tanggal', 'Sales', 'Pelanggan', 'Barang', 'Qty', 'Harga', 'Subtotal', 'Total Order'];
   let csv = 'sep=' + SEP + '\n' + headers.join(SEP) + '\n';
-  orders.forEach(o => {
+  data.forEach(o => {
     o.items.forEach((item, idx) => {
       csv += [
         o.no, o.date, o.sales, o.customer,
