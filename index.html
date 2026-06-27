@@ -5,11 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Order Management</title>
 <style>
+  /* === Tema: Ocean Depths === */
+  :root {
+    --brand: #1f6f78;        /* teal utama: header, tombol, judul, aksen */
+    --brand-hover: #185860;  /* teal lebih gelap untuk hover */
+    --brand-dark: #16323c;   /* navy tua untuk angka/teks kuat */
+    --page-bg: #eef5f4;      /* latar halaman, seafoam terang */
+    --soft: #e0efee;         /* panel lembut: total, header tabel, baris tambah */
+    --soft-hover: #cfe7e5;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; background: #f0f2f5; color: #1a1a1a; min-height: 100vh; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif; background: var(--page-bg); color: #1a1a1a; min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
   header {
-    background: #1e3a5f;
+    background: var(--brand);
     color: white;
     padding: 16px 24px;
     display: flex;
@@ -38,8 +47,8 @@
     margin-bottom: -2px;
     transition: all 0.2s;
   }
-  .tab-btn.active { color: #1e3a5f; border-bottom-color: #1e3a5f; }
-  .tab-btn:hover { color: #1e3a5f; background: #f5f7fa; }
+  .tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
+  .tab-btn:hover { color: var(--brand); background: #f5f7fa; }
 
   .page { display: none; padding: 24px; max-width: 1100px; margin: 0 auto; }
   .page.active { display: block; }
@@ -51,7 +60,7 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     margin-bottom: 20px;
   }
-  .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1e3a5f; }
+  .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--brand); }
 
   .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
   .form-group { display: flex; flex-direction: column; gap: 6px; }
@@ -67,7 +76,7 @@
   }
   .form-group input:focus, .form-group select:focus {
     outline: none;
-    border-color: #1e3a5f;
+    border-color: var(--brand);
   }
   .form-group input[readonly] { background: #f5f7fa; color: #555; }
 
@@ -89,14 +98,14 @@
     background: #fff;
     color: #1a1a1a;
   }
-  .item-row input:focus, .item-row select:focus { outline: none; border-color: #1e3a5f; }
+  .item-row input:focus, .item-row select:focus { outline: none; border-color: var(--brand); }
 
   /* Dropdown barang (pencarian, ramah HP) */
   .barang-wrap { position: relative; }
   .barang-wrap input { width: 100%; }
   .barang-drop {
     display: none; position: absolute; top: calc(100% + 2px); left: 0; right: 0; z-index: 60;
-    background: #fff; border: 1.5px solid #1e3a5f; border-radius: 8px;
+    background: #fff; border: 1.5px solid var(--brand); border-radius: 8px;
     max-height: 260px; overflow-y: auto; box-shadow: 0 6px 18px rgba(0,0,0,0.18);
     -webkit-overflow-scrolling: touch;
   }
@@ -105,8 +114,8 @@
     border-bottom: 1px solid #f0f0f0;
   }
   .barang-opt:last-child { border-bottom: none; }
-  .barang-opt:hover, .barang-opt.active { background: #e8f0fe; }
-  .barang-opt .op { color: #1e3a5f; font-weight: 600; font-size: 13px; float: right; }
+  .barang-opt:hover, .barang-opt.active { background: var(--soft); }
+  .barang-opt .op { color: var(--brand); font-weight: 600; font-size: 13px; float: right; }
   .barang-opt-empty { padding: 12px 13px; font-size: 13px; color: #999; }
 
   .btn {
@@ -118,25 +127,25 @@
     cursor: pointer;
     transition: all 0.2s;
   }
-  .btn-primary { background: #1e3a5f; color: white; }
-  .btn-primary:hover { background: #163050; }
+  .btn-primary { background: var(--brand); color: white; }
+  .btn-primary:hover { background: var(--brand-hover); }
   .btn-success { background: #2e7d32; color: white; }
   .btn-success:hover { background: #256427; }
   .btn-danger { background: #c62828; color: white; }
   .btn-danger:hover { background: #a01e1e; }
   .btn-outline {
     background: transparent;
-    border: 1.5px solid #1e3a5f;
-    color: #1e3a5f;
+    border: 1.5px solid var(--brand);
+    color: var(--brand);
   }
-  .btn-outline:hover { background: #f0f4f8; }
+  .btn-outline:hover { background: var(--soft); }
   .btn-sm { padding: 6px 12px; font-size: 13px; }
   .btn-icon { padding: 8px 10px; font-size: 14px; }
 
   .btn-add-row {
-    background: #e8f0fe;
-    color: #1e3a5f;
-    border: 1.5px dashed #1e3a5f;
+    background: var(--soft);
+    color: var(--brand);
+    border: 1.5px dashed var(--brand);
     width: 100%;
     margin-top: 6px;
     padding: 9px;
@@ -146,10 +155,10 @@
     font-weight: 500;
     transition: background 0.2s;
   }
-  .btn-add-row:hover { background: #d0e1f9; }
+  .btn-add-row:hover { background: var(--soft-hover); }
 
   .total-box {
-    background: #f0f4f8;
+    background: var(--soft);
     border-radius: 8px;
     padding: 14px 18px;
     margin-top: 16px;
@@ -159,7 +168,7 @@
     gap: 12px;
   }
   .total-box span { font-size: 14px; color: #555; }
-  .total-box strong { font-size: 20px; color: #1e3a5f; font-weight: 700; }
+  .total-box strong { font-size: 20px; color: var(--brand-dark); font-weight: 700; }
 
   .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 
@@ -179,7 +188,7 @@
     border-radius: 7px;
     font-size: 14px;
   }
-  .search-input:focus { outline: none; border-color: #1e3a5f; }
+  .search-input:focus { outline: none; border-color: var(--brand); }
 
   .filter-select {
     padding: 9px 13px;
@@ -193,11 +202,11 @@
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th {
-    background: #f0f4f8;
+    background: var(--soft);
     padding: 10px 12px;
     text-align: left;
     font-weight: 600;
-    color: #1e3a5f;
+    color: var(--brand);
     border-bottom: 2px solid #ddd;
     white-space: nowrap;
   }
@@ -229,7 +238,7 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   }
   .summary-card .label { font-size: 12px; color: #888; margin-bottom: 6px; }
-  .summary-card .value { font-size: 22px; font-weight: 700; color: #1e3a5f; }
+  .summary-card .value { font-size: 22px; font-weight: 700; color: var(--brand-dark); }
   .summary-card .sub { font-size: 12px; color: #aaa; margin-top: 2px; }
 
   /* Admin */
@@ -245,7 +254,7 @@
   }
   .add-item-row { display: flex; gap: 8px; margin-top: 10px; }
   .add-item-row input { flex: 1; padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 7px; font-size: 14px; }
-  .add-item-row input:focus { outline: none; border-color: #1e3a5f; }
+  .add-item-row input:focus { outline: none; border-color: var(--brand); }
 
   /* Modal */
   .modal-overlay {
@@ -267,7 +276,7 @@
     max-height: 80vh;
     overflow-y: auto;
   }
-  .modal h2 { font-size: 17px; color: #1e3a5f; margin-bottom: 16px; }
+  .modal h2 { font-size: 17px; color: var(--brand); margin-bottom: 16px; }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 
   .detail-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: 14px; }
@@ -283,8 +292,8 @@
       gap: 8px;
       padding: 10px;
       margin-bottom: 12px;
-      background: #f7f9fc;
-      border: 1px solid #e3e8ef;
+      background: var(--soft);
+      border: 1px solid var(--soft-hover);
       border-radius: 9px;
     }
     .item-row > .barang-wrap { grid-column: 1 / -1; }   /* barang penuh di atas */
@@ -322,7 +331,7 @@
     .orders-table thead { display: none; }
     .orders-table, .orders-table tbody, .orders-table tr, .orders-table td { display: block; width: 100%; }
     .orders-table tr {
-      background: #fff; border: 1px solid #e3e8ef; border-radius: 10px;
+      background: #fff; border: 1px solid var(--soft-hover); border-radius: 10px;
       margin-bottom: 12px; padding: 10px 14px;
     }
     .orders-table td {
@@ -371,21 +380,21 @@
 
   /* Login */
   .login-overlay {
-    position: fixed; inset: 0; background: #1e3a5f;
+    position: fixed; inset: 0; background: var(--brand);
     display: flex; align-items: center; justify-content: center; z-index: 300; padding: 20px;
   }
   .login-box {
     background: #fff; border-radius: 14px; padding: 32px 28px;
     width: 100%; max-width: 360px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
   }
-  .login-box h1 { font-size: 22px; color: #1e3a5f; text-align: center; }
+  .login-box h1 { font-size: 22px; color: var(--brand); text-align: center; }
   .login-sub { font-size: 13px; color: #888; text-align: center; margin: 6px 0 22px; }
   .login-box .form-group label { font-size: 13px; font-weight: 500; color: #444; }
   .login-box input {
     padding: 11px 13px; border: 1.5px solid #ddd; border-radius: 8px;
     font-size: 15px; width: 100%;
   }
-  .login-box input:focus { outline: none; border-color: #1e3a5f; }
+  .login-box input:focus { outline: none; border-color: var(--brand); }
   .login-err { color: #c62828; font-size: 13px; text-align: center; margin-top: 12px; min-height: 18px; }
   .role-hidden { display: none !important; }
 </style>
@@ -1083,7 +1092,7 @@ function showDetail(no) {
     <div class="detail-row"><span class="dk">Pelanggan</span><span class="dv">${o.customer}</span></div>
     <div style="margin-top:14px;">
       <table class="detail-table" style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead><tr style="background:#f0f4f8;">
+        <thead><tr style="background:var(--soft);">
           <th style="padding:8px 10px;text-align:left;">Barang</th>
           <th style="padding:8px 10px;text-align:center;">Qty</th>
           <th style="padding:8px 10px;text-align:left;">Harga</th>
@@ -1092,7 +1101,7 @@ function showDetail(no) {
         <tbody>${rows}</tbody>
         <tfoot><tr>
           <td colspan="3" style="padding:10px;font-weight:700;text-align:right;">TOTAL</td>
-          <td style="padding:10px;font-weight:700;color:#1e3a5f;">${formatRp(o.total)}</td>
+          <td style="padding:10px;font-weight:700;color:var(--brand);">${formatRp(o.total)}</td>
         </tr></tfoot>
       </table>
     </div>
