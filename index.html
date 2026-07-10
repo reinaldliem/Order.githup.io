@@ -285,7 +285,7 @@
 
   .detail-table th, .detail-table td { padding: 8px 10px; font-size: 13px; }
 
-  @media (max-width: 600px) {
+  @media (min-width: 0px) { /* berlaku di SEMUA ukuran — satu tampilan gaya mobile */
     .item-head { display: none; }                 /* label kolom disembunyikan, pakai placeholder */
     .item-row {
       grid-template-columns: 64px 1fr auto;       /* Qty | Harga | tombol hapus */
@@ -533,8 +533,8 @@
   .bn-item.active { color: var(--brand); }
   .bn-item.active .bn-ic { filter: none; }
 
-  /* ===== Mobile ===== */
-  @media (max-width: 700px) {
+  /* ===== Tata letak app (berlaku semua ukuran — satu tampilan gaya mobile) ===== */
+  @media (min-width: 0px) {
     .tabs { display: none; }
     .bottomnav {
       display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
@@ -579,6 +579,26 @@
     /* Saat keyboard terbuka (Android), sembunyikan bar bawah agar tidak menutupi layar */
     body.kb-open .bottomnav, body.kb-open .order-actionbar { display: none; }
     body.kb-open #page-order { padding-bottom: 20px; }
+  }
+
+  /* ============================================================
+     SATU TAMPILAN — kolom tengah ala aplikasi HP di semua layar
+     ============================================================ */
+  .page { max-width: 500px; }
+  header {
+    padding-left: max(14px, calc((100vw - 500px) / 2));
+    padding-right: max(14px, calc((100vw - 500px) / 2));
+  }
+  .bottomnav, .order-actionbar { max-width: 500px; margin: 0 auto; }
+  @media (min-width: 540px) {
+    .bottomnav {
+      border-radius: 14px 14px 0 0;
+      border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+    }
+    .order-actionbar {
+      border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+    }
+    .modal { max-width: 470px; }
   }
 </style>
 </head>
