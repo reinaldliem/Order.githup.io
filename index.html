@@ -404,23 +404,25 @@
      ============================================================ */
   :root {
     --card-radius: 16px;
-    --nav-h: 62px;
+    --nav-h: 56px;
     --shadow-sm: 0 1px 2px rgba(20,50,60,0.06), 0 4px 14px rgba(20,50,60,0.05);
     --shadow-md: 0 2px 6px rgba(20,50,60,0.08), 0 12px 30px rgba(20,50,60,0.07);
     --line: rgba(31,111,120,0.16);
   }
   body { background: var(--page-bg); color: #16323c; }
 
-  /* Header */
+  /* Header — selalu satu baris */
   header {
     position: sticky; top: 0; z-index: 40;
     background: var(--brand-dark); color: #fff;
-    padding: 14px 22px; box-shadow: var(--shadow-sm);
+    padding: 12px 20px; box-shadow: var(--shadow-sm);
+    flex-wrap: nowrap; gap: 10px;
   }
-  header h1 { font-size: 18px; font-weight: 500; letter-spacing: 0.2px; }
+  header h1 { font-size: 18px; font-weight: 500; letter-spacing: 0.2px; white-space: nowrap; }
+  header > div { flex-shrink: 0; }
   #user-badge {
     font-size: 13px; background: rgba(255,255,255,0.14);
-    padding: 6px 13px; border-radius: 20px; font-weight: 500;
+    padding: 6px 13px; border-radius: 20px; font-weight: 500; white-space: nowrap;
   }
   header .btn-sm { border-radius: 20px; background: rgba(255,255,255,0.16) !important; }
   header .btn-sm:hover { background: rgba(255,255,255,0.26) !important; }
@@ -501,18 +503,10 @@
   .summary-card .value { color: var(--brand-dark); }
   .summary-card .sub { color: #9bb3b2; }
 
-  /* Pill periode */
-  .period-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-  .pill {
-    border: 1.5px solid var(--line); background: #fff; color: #4f7776;
-    border-radius: 22px; padding: 8px 16px; font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: all 0.15s;
-  }
-  .pill:hover { background: var(--soft); color: var(--brand); }
-  .pill.active { background: var(--brand); color: #fff; border-color: var(--brand); }
-  .custom-range { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
-  .toolbar-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .toolbar-row .search-input { flex: 1; }
+  /* Toolbar filter (dropdown periode + tanggal, lalu cari + sales + export) */
+  .toolbar-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .toolbar-line .search-input { flex: 1; min-width: 160px; }
+  .toolbar-line .filter-select { min-width: 0; }
 
   /* Tabel */
   th { background: var(--soft); color: var(--brand-dark); border-bottom: 1px solid var(--line); }
@@ -532,10 +526,10 @@
   .bottomnav { display: none; }
   .bn-item {
     flex: 1; background: none; border: none; cursor: pointer;
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
-    padding: 8px 0; color: #9bb3b2; font-size: 11px; font-weight: 500;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    padding: 6px 0; color: #9bb3b2; font-size: 10px; font-weight: 500;
   }
-  .bn-item .bn-ic { font-size: 20px; line-height: 1; filter: grayscale(1) opacity(0.6); }
+  .bn-item .bn-ic { font-size: 18px; line-height: 1; filter: grayscale(1) opacity(0.6); }
   .bn-item.active { color: var(--brand); }
   .bn-item.active .bn-ic { filter: none; }
 
@@ -547,23 +541,44 @@
       height: var(--nav-h); background: #fff; border-top: 1px solid var(--line);
       box-shadow: 0 -2px 14px rgba(20,50,60,0.08);
     }
-    #app { padding-bottom: var(--nav-h); }
-    .page { padding: 14px 14px 20px; }
-    .card { padding: 16px; border-radius: 14px; }
+    #app { padding-bottom: calc(var(--nav-h) + 12px); }
+    .page { padding: 12px 12px 20px; }
+    .card { padding: 14px; border-radius: 14px; }
 
-    /* Bar aksi order jadi fixed di atas navigasi bawah */
+    /* Header ikut tergulung (tidak sticky) supaya isi tidak tertutup */
+    header { position: static; padding: 10px 14px; }
+    header h1 { font-size: 15px; }
+    #user-badge { font-size: 11px; padding: 4px 10px; }
+    header .btn-sm { padding: 6px 10px; font-size: 12px; }
+
+    /* Bar aksi order: ramping, nempel di atas navigasi bawah */
     .order-actionbar {
       position: fixed; left: 0; right: 0; bottom: var(--nav-h); z-index: 30;
-      border-radius: 16px 16px 0 0; margin: 0; border-left: none; border-right: none; border-bottom: none;
+      border-radius: 14px 14px 0 0; margin: 0; padding: 8px 12px;
+      border-left: none; border-right: none; border-bottom: none;
     }
-    #page-order { padding-bottom: 150px; }
-    .order-actionbar .btn { padding: 12px 16px; }
+    .oa-total span { font-size: 11px; }
+    .oa-total strong { font-size: 17px; }
+    .order-actionbar .btn { padding: 10px 14px; font-size: 13px; }
+    #page-order { padding-bottom: 132px; }
 
-    .period-pills { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
-    .pill { white-space: nowrap; }
-    .toolbar-row { flex-direction: column; align-items: stretch; }
-    .toolbar-row .search-input, .toolbar-row .filter-select, .toolbar-row .btn { width: 100%; }
-    .custom-range .filter-select { flex: 1; min-width: 0; }
+    /* Toolbar filter: simetris — periode+tanggal sebaris, cari penuh, sales+export sebaris */
+    .toolbar-line .filter-select, .toolbar-line input[type=date], .toolbar-line input[type=month] {
+      flex: 1; min-width: 0;
+    }
+    .toolbar-line .search-input { flex: 1 1 100%; min-width: 0; }
+    .toolbar-line #filter-sales { flex: 1; }
+    .toolbar-line #export-btn { flex: 1; padding: 10px; }
+
+    /* Ringkasan: Jumlah & Rata-rata berdampingan, Nilai Order penuh */
+    .summary-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .summary-grid .summary-card:nth-child(2) { grid-column: 1 / -1; }
+    .summary-card { padding: 12px 14px; }
+    .summary-card .value { font-size: 18px; }
+
+    /* Saat keyboard terbuka (Android), sembunyikan bar bawah agar tidak menutupi layar */
+    body.kb-open .bottomnav, body.kb-open .order-actionbar { display: none; }
+    body.kb-open #page-order { padding-bottom: 20px; }
   }
 </style>
 </head>
@@ -676,18 +691,10 @@
   </div>
 
   <div class="card">
-    <div class="period-pills" id="period-pills">
-      <button type="button" class="pill active" onclick="setPeriod('harian', this)">Hari Ini</button>
-      <button type="button" class="pill" onclick="setPeriod('minggu', this)">Minggu Ini</button>
-      <button type="button" class="pill" onclick="setPeriod('bulan', this)">Bulan Ini</button>
-      <button type="button" class="pill" onclick="setPeriod('semua', this)">Semua</button>
-      <button type="button" class="pill pill-cal" onclick="toggleCustom(this)">📅 Pilih tanggal</button>
-    </div>
-
-    <div class="custom-range" id="custom-range" style="display:none;">
+    <div class="toolbar-line">
       <select class="filter-select" id="filter-period" onchange="onPeriodChange()">
         <option value="harian">Harian</option>
-        <option value="mingguan">Mingguan (rentang)</option>
+        <option value="mingguan">Mingguan</option>
         <option value="bulanan">Bulanan</option>
         <option value="semua">Semua</option>
       </select>
@@ -697,7 +704,7 @@
       <input type="month" class="filter-select" id="filter-month" onchange="filterOrders()" style="display:none;">
     </div>
 
-    <div class="toolbar-row">
+    <div class="toolbar-line">
       <input class="search-input" type="text" placeholder="Cari no. order, pelanggan, sales..." oninput="filterOrders()">
       <select class="filter-select" onchange="filterOrders()" id="filter-sales">
         <option value="">Semua Sales</option>
@@ -1146,59 +1153,13 @@ function renderOrderList() {
   const sel = document.getElementById('filter-sales');
   sel.innerHTML = '<option value="">Semua Sales</option>';
   salesList.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+  if (!document.getElementById('filter-date').value) document.getElementById('filter-date').value = todayKey();
   if (!document.getElementById('filter-month').value) document.getElementById('filter-month').value = todayKey().slice(0, 7);
-  // Default: pill "Hari Ini" aktif
-  const firstPill = document.querySelector('#period-pills .pill');
-  setPeriod('harian', firstPill);
+  onPeriodChange();
 }
 
 function addDaysKey(key, n) {
   const d = new Date(key + 'T00:00:00'); d.setDate(d.getDate() + n); return keyOf(d);
-}
-
-// Awal (Senin) minggu yang memuat tanggal acuan
-function startOfWeekKey(key) {
-  const d = new Date(key + 'T00:00:00');
-  const dow = (d.getDay() + 6) % 7;      // Senin = 0
-  d.setDate(d.getDate() - dow);
-  return keyOf(d);
-}
-
-// Tombol pill periode cepat
-function setPeriod(preset, el) {
-  document.querySelectorAll('#period-pills .pill').forEach(p => p.classList.remove('active'));
-  if (el) el.classList.add('active');
-  document.getElementById('custom-range').style.display = 'none';
-  const per = document.getElementById('filter-period');
-  const t = todayKey();
-  if (preset === 'harian') {
-    per.value = 'harian';
-    document.getElementById('filter-date').value = t;
-  } else if (preset === 'minggu') {
-    per.value = 'mingguan';
-    const s = startOfWeekKey(t);
-    document.getElementById('filter-date').value = s;
-    document.getElementById('filter-date2').value = addDaysKey(s, 6);
-  } else if (preset === 'bulan') {
-    per.value = 'bulanan';
-    document.getElementById('filter-month').value = t.slice(0, 7);
-  } else if (preset === 'semua') {
-    per.value = 'semua';
-  }
-  onPeriodChange();
-}
-
-// Buka/tutup kontrol tanggal manual (rentang bebas / bulan tertentu)
-function toggleCustom(el) {
-  const box = document.getElementById('custom-range');
-  const show = box.style.display === 'none';
-  box.style.display = show ? '' : 'none';
-  if (show) {
-    document.querySelectorAll('#period-pills .pill').forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
-    if (!document.getElementById('filter-date').value) document.getElementById('filter-date').value = todayKey();
-    onPeriodChange();
-  }
 }
 
 // Tampilkan kontrol tanggal sesuai periode
@@ -1463,6 +1424,19 @@ function updateClock() {
 
 document.getElementById('detail-modal').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
+});
+
+/* Saat keyboard terbuka (fokus di kolom ketik), sembunyikan bar bawah
+   supaya tidak terdorong naik menutupi layar (khas Android). */
+const KB_SELECTOR = 'input[type=text], input[type=number], input[type=password], input:not([type]), textarea';
+document.addEventListener('focusin', e => {
+  if (e.target.matches(KB_SELECTOR)) document.body.classList.add('kb-open');
+});
+document.addEventListener('focusout', () => {
+  setTimeout(() => {
+    const a = document.activeElement;
+    if (!a || !a.matches(KB_SELECTOR)) document.body.classList.remove('kb-open');
+  }, 150);
 });
 
 updateClock();
