@@ -600,6 +600,32 @@
     }
     .modal { max-width: 470px; }
   }
+
+  /* ============================================================
+     PENYEMPURNAAN KERAPIAN (hasil audit UI/UX)
+     ============================================================ */
+  /* Form order dipadatkan: Tanggal & No. Order sebaris,
+     Sales & Pelanggan melebar penuh — form jadi jauh lebih pendek */
+  .form-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-grid .form-group:nth-child(3),
+  .form-grid .form-group:nth-child(4) { grid-column: 1 / -1; }
+  .form-group label { font-size: 12px; }
+  .form-group input[readonly] { font-size: 13px !important; padding: 9px 10px; color: #5b7473; }
+
+  /* Filter: dropdown periode satu baris penuh, kotak tanggal rapi di bawahnya */
+  .toolbar-line #filter-period { flex: 1 1 100%; }
+
+  /* Judul kartu lebih ringkas */
+  .card h2 { font-size: 16px; margin-bottom: 14px; }
+
+  /* Samakan gaya input halaman Pengaturan dengan input lain
+     (menimpa style inline lama yang sudutnya beda) */
+  #page-admin input, #page-admin select {
+    border: 1.5px solid var(--line) !important;
+    border-radius: 11px !important;
+    padding: 10px 12px !important;
+    font-size: 16px !important;
+  }
 </style>
 </head>
 <body>
