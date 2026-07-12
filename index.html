@@ -715,7 +715,12 @@
       </div>
       <div class="form-group">
         <label>Nama Pelanggan</label>
-        <input type="text" id="order-customer" placeholder="Nama pelanggan">
+        <div class="barang-wrap">
+          <input type="text" id="order-customer" placeholder="Pilih / ketik pelanggan" autocomplete="off"
+                 autocorrect="off" autocapitalize="off" spellcheck="false"
+                 oninput="onCustInput(this)" onfocus="onCustInput(this)" onblur="hideBarangDrop(this)">
+          <div class="barang-drop"></div>
+        </div>
       </div>
     </div>
 
@@ -880,6 +885,7 @@ let orders = [];
 let salesList = [];
 let barangList = [];
 let priceMap = {};
+let customerMap = {};   // { KODE_SALES: [nama toko, ...] }
 let usersList = [];
 let currentUser = null;   // { id, pin, role }
 let currentOrderId = null;
@@ -901,6 +907,7 @@ function applyData(d) {
   salesList = d.salesList || [];
   barangList = d.barangList || [];
   priceMap = d.priceMap || {};
+  customerMap = d.customerMap || {};
   usersList = d.users || [];
 }
 
@@ -1156,6 +1163,43 @@ function hideBarangDrop(inp) {
   }, 200);
 }
 
+/* ---- Dropdown pelanggan: daftar toko milik sales yang aktif ---- */
+function activeCustList() {
+  if (!isAdmin()) return customerMap[currentUser.id] || [];
+  const sel = document.getElementById('order-sales').value;
+  if (sel && customerMap[sel]) return customerMap[sel];
+  return Object.values(customerMap).flat();   // admin belum pilih sales: tampilkan semua
+}
+
+function onCustInput(inp) {
+  const drop = inp.parentElement.querySelector('.barang-drop');
+  const q = inp.value.trim().toLowerCase();
+  let list = [...new Set(activeCustList())];
+  if (q) {
+    const words = q.split(/\s+/);
+    list = list.filter(c => words.every(w => c.toLowerCase().includes(w)));
+  }
+  list.sort();
+  const shown = list.slice(0, 60);
+  if (!shown.length) {
+    drop.innerHTML = '<div class="barang-opt-empty">Pelanggan baru — lanjutkan ketik manual.</div>';
+    drop.style.display = 'block';
+    return;
+  }
+  drop.innerHTML = shown.map(c =>
+    `<div class="barang-opt" data-name="${esc(c)}" onmousedown="pickCust(event, this)">${esc(c)}</div>`
+  ).join('');
+  if (list.length > 60) drop.innerHTML += '<div class="barang-opt-empty">… ketik untuk mempersempit</div>';
+  drop.style.display = 'block';
+}
+
+function pickCust(ev, el) {
+  ev.preventDefault();
+  const wrap = el.closest('.barang-wrap');
+  wrap.querySelector('input').value = el.getAttribute('data-name');
+  wrap.querySelector('.barang-drop').style.display = 'none';
+}
+
 function refreshBarangOptions() { /* tidak dipakai lagi (dropdown custom) */ }
 
 function removeRow(id) {
@@ -1369,8 +1413,12 @@ function showDetail(no) {
       <td>${formatRp(i.subtotal)}</td>
     </tr>
   `).join('');
+  const notaRow = o.notaNo
+    ? `<div class="detail-row"><span class="dk">No. Nota</span><span class="dv">${esc(o.notaNo)}</span></div>`
+    : '';
   document.getElementById('modal-content').innerHTML = `
     <div class="detail-row"><span class="dk">No. Order</span><span class="dv">${o.no}</span></div>
+    ${notaRow}
     <div class="detail-row"><span class="dk">Tanggal</span><span class="dv">${o.date}</span></div>
     <div class="detail-row"><span class="dk">Sales</span><span class="dv">${o.sales}</span></div>
     <div class="detail-row"><span class="dk">Pelanggan</span><span class="dv">${o.customer}</span></div>
@@ -1479,9 +1527,22 @@ function terbilang(n) {
   return angka(n).replace(/\s+/g, ' ').trim();
 }
 
-function printNota(no) {
+async function printNota(no) {
   const o = orders.find(x => x.no === no);
   if (!o) return;
+  // Nomor nota berurutan dari server — dibuat sekali, cetak ulang nomornya tetap
+  let notaNo = o.notaNo || '';
+  if (!notaNo) {
+    showToast('Menyiapkan nomor nota...');
+    try {
+      const r = await apiPost({ action: 'getNotaNo', no });
+      if (r.ok && r.notaNo) { notaNo = r.notaNo; o.notaNo = notaNo; }
+    } catch (e) { console.error(e); }
+  }
+  if (!notaNo) {
+    showToast('Gagal mengambil nomor nota. Pastikan Code.gs versi terbaru sudah di-deploy.', 'error');
+    return;
+  }
   const rows = o.items.map((it, i) => `
     <tr>
       <td style="width:34px;text-align:center;">${i + 1}</td>
@@ -1498,11 +1559,12 @@ function printNota(no) {
       </div>
       <div>
         <div class="nt-title">NOTA PENJUALAN</div>
-        <div class="nt-no">${esc(o.no)}</div>
+        <div class="nt-no">No. Nota: <b>${esc(notaNo)}</b></div>
+        <div class="nt-no">Ref: ${esc(o.no)}</div>
       </div>
     </div>
     <div class="nt-info">
-      <div>Pelanggan: <b>${esc(o.customer)}</b><br>Sales: ${esc(o.sales)}</div>
+      <div>Pelanggan: <b>${esc(o.customer)}</b><br>Kode Sls: ${esc(o.sales)}</div>
       <div style="text-align:right;">Tanggal: ${esc(o.date)}</div>
     </div>
     <table>
