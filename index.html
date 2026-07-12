@@ -628,31 +628,34 @@
   }
 
   /* ============================================================
-     CETAK NOTA — area khusus yang hanya muncul di dialog print
+     CETAK NOTA — continuous form A5 fanfold (9,5" x 5,5")
+     margin @page = 0 agar browser tidak mencetak URL di bawah;
+     jarak tepi diganti padding di dalam #nota-area.
      ============================================================ */
   #nota-area { display: none; font-family: Arial, sans-serif; color: #000; }
-  @page { size: A4 portrait; margin: 12mm; }
+  @page { size: 241mm 140mm; margin: 0; }
   @media print {
     body.printing-nota #app,
     body.printing-nota .login-overlay,
     body.printing-nota .toast { display: none !important; }
     body.printing-nota #nota-area { display: block !important; }
   }
-  #nota-area .nt-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2.5px solid #000; padding-bottom: 10px; }
-  #nota-area .nt-toko { font-size: 19px; font-weight: 700; letter-spacing: 0.4px; }
-  #nota-area .nt-alamat { font-size: 12px; margin-top: 3px; }
-  #nota-area .nt-title { font-size: 17px; font-weight: 700; text-align: right; }
-  #nota-area .nt-no { font-size: 12px; text-align: right; margin-top: 3px; }
-  #nota-area .nt-info { display: flex; justify-content: space-between; margin: 10px 0 4px; font-size: 12.5px; }
-  #nota-area table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-  #nota-area th, #nota-area td { border: 1px solid #000; padding: 6px 8px; font-size: 12.5px; text-align: left; }
+  #nota-area { padding: 8mm 14mm; }
+  #nota-area .nt-title-c { text-align: center; font-size: 15px; font-weight: 700; letter-spacing: 1.5px; text-decoration: underline; margin-bottom: 8px; }
+  #nota-area .nt-info { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin: 4px 0 6px; font-size: 12px; }
+  #nota-area .nt-cust { font-size: 13px; font-weight: 700; }
+  #nota-area .nt-addr { font-size: 11.5px; font-weight: 400; margin-top: 2px; max-width: 110mm; }
+  #nota-area .nt-meta { text-align: right; line-height: 1.5; white-space: nowrap; }
+  #nota-area .nt-ref { font-size: 10px; color: #444; }
+  #nota-area table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  #nota-area th, #nota-area td { border: 1px solid #000; padding: 4px 7px; font-size: 12px; text-align: left; }
   #nota-area th { background: #eee; }
   #nota-area .nt-num { text-align: right; }
   #nota-area .nt-total td { font-weight: 700; }
-  #nota-area .nt-terbilang { font-size: 12px; font-style: italic; margin-top: 6px; }
-  #nota-area .nt-ttd { display: flex; justify-content: space-between; margin-top: 34px; text-align: center; font-size: 12.5px; }
-  #nota-area .nt-ttd > div { width: 180px; }
-  #nota-area .nt-ttd .nt-line { margin-top: 56px; border-top: 1px solid #000; padding-top: 4px; }
+  #nota-area .nt-terbilang { font-size: 11.5px; font-style: italic; margin-top: 5px; }
+  #nota-area .nt-ttd { display: flex; justify-content: space-between; margin-top: 14px; text-align: center; font-size: 12px; }
+  #nota-area .nt-ttd > div { width: 170px; }
+  #nota-area .nt-ttd .nt-line { margin-top: 40px; border-top: 1px solid #000; padding-top: 3px; }
 </style>
 </head>
 <body>
@@ -877,15 +880,12 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbyjUGVPHqmzybXiUKtCBIcRWKMtFOzCFykWpoYSMJ0mhHHw1lYNDxM42NiixNk5zBEB/exec';
 const USE_SERVER = !!API_URL;
 
-/* Identitas toko untuk cetak nota — silakan ganti sesuai toko Anda */
-const NOTA_TOKO = 'NAMA TOKO ANDA';
-const NOTA_ALAMAT = 'Alamat toko — Telp/WA: 08xx-xxxx-xxxx';
-
 let orders = [];
 let salesList = [];
 let barangList = [];
 let priceMap = {};
 let customerMap = {};   // { KODE_SALES: [nama toko, ...] }
+let custAddrMap = {};   // { nama toko: alamat }
 let usersList = [];
 let currentUser = null;   // { id, pin, role }
 let currentOrderId = null;
@@ -908,6 +908,7 @@ function applyData(d) {
   barangList = d.barangList || [];
   priceMap = d.priceMap || {};
   customerMap = d.customerMap || {};
+  custAddrMap = d.custAddr || {};
   usersList = d.users || [];
 }
 
@@ -1551,21 +1552,20 @@ async function printNota(no) {
       <td class="nt-num" style="width:110px;">${formatRp(it.harga)}</td>
       <td class="nt-num" style="width:120px;">${formatRp(it.subtotal)}</td>
     </tr>`).join('');
+  const alamat = custAddrMap[o.customer] || '';
   document.getElementById('nota-area').innerHTML = `
-    <div class="nt-top">
-      <div>
-        <div class="nt-toko">${esc(NOTA_TOKO)}</div>
-        <div class="nt-alamat">${esc(NOTA_ALAMAT)}</div>
-      </div>
-      <div>
-        <div class="nt-title">NOTA PENJUALAN</div>
-        <div class="nt-no">No. Nota: <b>${esc(notaNo)}</b></div>
-        <div class="nt-no">Ref: ${esc(o.no)}</div>
-      </div>
-    </div>
+    <div class="nt-title-c">NOTA PENJUALAN</div>
     <div class="nt-info">
-      <div>Pelanggan: <b>${esc(o.customer)}</b><br>Kode Sls: ${esc(o.sales)}</div>
-      <div style="text-align:right;">Tanggal: ${esc(o.date)}</div>
+      <div>
+        <div class="nt-cust">${esc(o.customer)}</div>
+        <div class="nt-addr">${esc(alamat)}</div>
+      </div>
+      <div class="nt-meta">
+        No. Nota: <b>${esc(notaNo)}</b><br>
+        Tanggal: ${esc(o.date)}<br>
+        Kode Sls: ${esc(o.sales)}<br>
+        <span class="nt-ref">Ref: ${esc(o.no)}</span>
+      </div>
     </div>
     <table>
       <thead><tr>
@@ -1583,8 +1583,8 @@ async function printNota(no) {
     </table>
     <div class="nt-terbilang">Terbilang: <b>${terbilang(o.total)} rupiah</b></div>
     <div class="nt-ttd">
-      <div>Penerima,<div class="nt-line">${esc(o.customer)}</div></div>
-      <div>Hormat kami,<div class="nt-line">${esc(o.sales)}</div></div>
+      <div>Penerima,<div class="nt-line">&nbsp;</div></div>
+      <div>Hormat kami,<div class="nt-line">&nbsp;</div></div>
     </div>`;
   document.body.classList.add('printing-nota');
   setTimeout(() => window.print(), 60);
