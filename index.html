@@ -7,12 +7,13 @@
 <style>
   /* === Tema: Ocean Depths === */
   :root {
-    --brand: #1f6f78;        /* teal utama: header, tombol, judul, aksen */
-    --brand-hover: #185860;  /* teal lebih gelap untuk hover */
-    --brand-dark: #16323c;   /* navy tua untuk angka/teks kuat */
-    --page-bg: #eef5f4;      /* latar halaman, seafoam terang */
-    --soft: #e0efee;         /* panel lembut: total, header tabel, baris tambah */
-    --soft-hover: #cfe7e5;
+    --brand: #1f6f78;        /* satu-satunya warna aksen (teal) */
+    --brand-hover: #185860;
+    --brand-dark: #17313a;   /* teks utama gelap */
+    --page-bg: #fafcfc;      /* latar nyaris putih */
+    --soft: #eef4f4;         /* isian field lembut */
+    --soft-hover: #e3f0ef;   /* chip / hover teal sangat muda */
+    --muted: #7b9494;        /* teks sekunder */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif; background: var(--page-bg); color: #1a1a1a; min-height: 100vh; -webkit-font-smoothing: antialiased; }
@@ -129,8 +130,8 @@
   }
   .btn-primary { background: var(--brand); color: white; }
   .btn-primary:hover { background: var(--brand-hover); }
-  .btn-success { background: #2e7d32; color: white; }
-  .btn-success:hover { background: #256427; }
+  .btn-success { background: var(--brand); color: white; }
+  .btn-success:hover { background: var(--brand-hover); }
   .btn-danger { background: #c62828; color: white; }
   .btn-danger:hover { background: #a01e1e; }
   .btn-outline {
@@ -391,8 +392,8 @@
   .login-sub { font-size: 13px; color: #888; text-align: center; margin: 6px 0 22px; }
   .login-box .form-group label { font-size: 13px; font-weight: 500; color: #444; }
   .login-box input {
-    padding: 11px 13px; border: 1.5px solid #ddd; border-radius: 8px;
-    font-size: 15px; width: 100%;
+    padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px;
+    font-size: 16px; width: 100%;   /* 16px wajib: cegah auto-zoom iOS */
   }
   .login-box input:focus { outline: none; border-color: var(--brand); }
   .login-err { color: #c62828; font-size: 13px; text-align: center; margin-top: 12px; min-height: 18px; }
@@ -403,29 +404,32 @@
      Aturan di bawah datang terakhir sehingga menggantikan gaya lama.
      ============================================================ */
   :root {
-    --card-radius: 16px;
+    --card-radius: 14px;
     --nav-h: 56px;
-    --shadow-sm: 0 1px 2px rgba(20,50,60,0.06), 0 4px 14px rgba(20,50,60,0.05);
-    --shadow-md: 0 2px 6px rgba(20,50,60,0.08), 0 12px 30px rgba(20,50,60,0.07);
-    --line: rgba(31,111,120,0.16);
+    --shadow-sm: none;                                /* flat minimalis */
+    --shadow-md: 0 10px 30px rgba(23,49,58,0.10);     /* hanya dropdown & modal */
+    --line: #e6eeee;                                  /* garis rambut */
   }
-  body { background: var(--page-bg); color: #16323c; }
+  body { background: var(--page-bg); color: var(--brand-dark); }
 
-  /* Header — selalu satu baris */
+  /* Header — terang, satu baris */
   header {
     position: sticky; top: 0; z-index: 40;
-    background: var(--brand-dark); color: #fff;
-    padding: 12px 20px; box-shadow: var(--shadow-sm);
+    background: var(--page-bg); color: var(--brand-dark);
+    padding: 12px 20px; border-bottom: 1px solid var(--line); box-shadow: none;
     flex-wrap: nowrap; gap: 10px;
   }
-  header h1 { font-size: 18px; font-weight: 500; letter-spacing: 0.2px; white-space: nowrap; }
+  header h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.2px; white-space: nowrap; color: var(--brand-dark); }
   header > div { flex-shrink: 0; }
   #user-badge {
-    font-size: 13px; background: rgba(255,255,255,0.14);
-    padding: 6px 13px; border-radius: 20px; font-weight: 500; white-space: nowrap;
+    font-size: 11px; background: var(--soft-hover); color: var(--brand);
+    padding: 5px 11px; border-radius: 20px; font-weight: 600; white-space: nowrap;
   }
-  header .btn-sm { border-radius: 20px; background: rgba(255,255,255,0.16) !important; }
-  header .btn-sm:hover { background: rgba(255,255,255,0.26) !important; }
+  header .btn-sm {
+    border-radius: 20px; background: transparent !important;
+    color: var(--muted) !important; border: 1px solid var(--line);
+  }
+  header .btn-sm:hover { background: var(--soft) !important; color: var(--brand) !important; }
 
   /* Tabs desktop = segmented control di tengah */
   .tabs {
@@ -442,14 +446,17 @@
 
   .page { max-width: 900px; padding: 20px; }
 
-  /* Kartu */
+  /* Kartu — flat, garis rambut */
   .card {
     background: #fff; border: 1px solid var(--line);
-    border-radius: var(--card-radius); box-shadow: var(--shadow-sm);
-    padding: 22px; margin-bottom: 18px;
+    border-radius: var(--card-radius); box-shadow: none;
+    padding: 18px; margin-bottom: 14px;
   }
-  .card h2 { font-size: 17px; font-weight: 500; color: var(--brand-dark); margin-bottom: 18px; }
-  .items-section h3 { color: var(--brand-dark); }
+  .card h2 { font-size: 15px; font-weight: 600; color: var(--brand-dark); margin-bottom: 14px; }
+  .items-section h3 {
+    font-size: 10.5px; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin: 16px 0 6px;
+  }
 
   /* Tombol */
   .btn { border-radius: 11px; font-weight: 500; letter-spacing: 0.2px; }
@@ -464,7 +471,10 @@
   .btn-add-row:hover { background: var(--soft-hover); }
 
   /* Input */
-  .form-group label { color: #4f7776; font-weight: 500; }
+  .form-group label {
+    font-size: 10.5px; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--muted); font-weight: 600;
+  }
   .form-group input, .form-group select,
   .item-row input, .search-input, .filter-select {
     border: 1.5px solid var(--line); border-radius: 11px; color: #16323c;
@@ -474,12 +484,38 @@
     outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(31,111,120,0.12);
   }
 
-  /* Baris barang jadi kartu (semua ukuran) */
+  /* Kartu barang: nama di atas, stepper qty + harga + subtotal di bawah */
   .item-row {
-    background: #fff; border: 1px solid var(--line); border-radius: 12px;
-    padding: 12px; margin-bottom: 10px; align-items: center;
+    display: block; background: #fff; border: 1px solid var(--line); border-radius: 14px;
+    padding: 12px 14px; margin-bottom: 8px;
   }
-  .item-head { background: transparent !important; border: none !important; padding: 0 12px !important; margin-bottom: 4px !important; }
+  .ic-top { display: flex; align-items: flex-start; gap: 8px; }
+  .ic-top .barang-wrap { flex: 1; }
+  .ic-x {
+    background: none; border: none; color: #c2d2d2; font-size: 20px;
+    line-height: 1; padding: 6px 4px; cursor: pointer;
+  }
+  .ic-x:hover { color: #c62828; }
+  .ic-row { display: flex; align-items: center; gap: 9px; margin-top: 10px; }
+  .stepper { display: flex; align-items: center; background: var(--soft); border-radius: 10px; flex-shrink: 0; }
+  .stepper button {
+    background: none; border: none; color: var(--brand); font-size: 17px;
+    font-weight: 600; padding: 7px 13px; cursor: pointer; line-height: 1;
+  }
+  .stepper input {
+    width: 38px; text-align: center; background: transparent;
+    border: none !important; box-shadow: none !important; padding: 7px 0;
+    font-weight: 600; -moz-appearance: textfield;
+  }
+  .stepper input::-webkit-outer-spin-button,
+  .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .ic-kali { color: var(--muted); font-size: 13px; flex-shrink: 0; }
+  .item-row .harga-input { flex: 1; min-width: 0; max-width: 130px; padding: 8px 10px !important; }
+  .ic-sub {
+    margin-left: auto; font-weight: 600; color: var(--brand-dark);
+    font-size: 13.5px; white-space: nowrap;
+  }
+  .item-head { display: none !important; }
   .barang-drop { border-radius: 12px; box-shadow: var(--shadow-md); }
 
   /* Bar aksi order (Total + Simpan) — nempel bawah */
@@ -494,14 +530,25 @@
   .oa-total strong { font-size: 21px; font-weight: 600; color: var(--brand-dark); }
   .order-actionbar .btn { padding: 12px 20px; }
 
-  /* Ringkasan */
-  .summary-card {
-    background: #fff; border: 1px solid var(--line); border-radius: 14px;
-    box-shadow: var(--shadow-sm); padding: 16px 18px;
+  /* Kartu omset (hero) */
+  .hero-omset { background: var(--brand); border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; }
+  .hero-omset .ho-label { font-size: 10.5px; letter-spacing: 0.8px; color: #bcdad8; font-weight: 600; }
+  .hero-omset .ho-value { font-size: 25px; font-weight: 600; color: #fff; margin: 2px 0; }
+  .hero-omset .ho-sub { font-size: 11.5px; color: #bcdad8; }
+
+  /* Daftar order: baris ringkas, ketuk untuk detail */
+  #orders-list { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; }
+  .order-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 13px 15px; border-bottom: 1px solid var(--soft); cursor: pointer;
   }
-  .summary-card .label { color: #6b8a89; font-weight: 500; }
-  .summary-card .value { color: var(--brand-dark); }
-  .summary-card .sub { color: #9bb3b2; }
+  .order-row:last-child { border-bottom: none; }
+  .order-row:hover { background: #f4f9f9; }
+  .or-cust { font-size: 13.5px; font-weight: 600; color: var(--brand-dark); }
+  .or-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .or-total { font-size: 13.5px; font-weight: 600; color: var(--brand); white-space: nowrap; }
+  .list-hint { text-align: center; font-size: 11px; color: #9db4b3; margin-top: 10px; }
+  #orders-list .no-data { padding: 28px; }
 
   /* Toolbar filter (dropdown periode + tanggal, lalu cari + sales + export) */
   .toolbar-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
@@ -517,10 +564,10 @@
   .modal h2 { color: var(--brand-dark); }
   .toast { border-radius: 12px; box-shadow: var(--shadow-md); }
 
-  /* Login */
-  .login-overlay { background: var(--brand-dark); }
-  .login-box { border-radius: 18px; }
-  .login-box h1 { color: var(--brand-dark); }
+  /* Login — terang */
+  .login-overlay { background: var(--page-bg); }
+  .login-box { border-radius: 18px; border: 1px solid var(--line); box-shadow: none; }
+  .login-box h1 { color: var(--brand-dark); font-weight: 600; }
 
   /* Navigasi bawah (mobile) */
   .bottomnav { display: none; }
@@ -529,9 +576,11 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
     padding: 6px 0; color: #9bb3b2; font-size: 10px; font-weight: 500;
   }
-  .bn-item .bn-ic { font-size: 18px; line-height: 1; filter: grayscale(1) opacity(0.6); }
+  .bn-item .bn-ic { width: 20px; height: 20px; stroke: currentColor; }
   .bn-item.active { color: var(--brand); }
-  .bn-item.active .bn-ic { filter: none; }
+
+  /* Meta order (tanggal · no. order) di form */
+  .order-meta { font-size: 11.5px; color: var(--muted); margin: -6px 0 12px; }
 
   /* ===== Tata letak app (berlaku semua ukuran — satu tampilan gaya mobile) ===== */
   @media (min-width: 0px) {
@@ -604,13 +653,8 @@
   /* ============================================================
      PENYEMPURNAAN KERAPIAN (hasil audit UI/UX)
      ============================================================ */
-  /* Form order dipadatkan: Tanggal & No. Order sebaris,
-     Sales & Pelanggan melebar penuh — form jadi jauh lebih pendek */
+  /* Form order dipadatkan */
   .form-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .form-grid .form-group:nth-child(3),
-  .form-grid .form-group:nth-child(4) { grid-column: 1 / -1; }
-  .form-group label { font-size: 12px; }
-  .form-group input[readonly] { font-size: 13px !important; padding: 9px 10px; color: #5b7473; }
 
   /* Filter: dropdown periode satu baris penuh, kotak tanggal rapi di bawahnya */
   .toolbar-line #filter-period { flex: 1 1 100%; }
@@ -663,7 +707,7 @@
 <!-- LOGIN OVERLAY -->
 <div class="login-overlay" id="login-overlay">
   <div class="login-box">
-    <h1>📋 Order Management</h1>
+    <h1>Order Management</h1>
     <p class="login-sub">Masuk dengan ID & PIN Anda</p>
     <div class="form-group" style="margin-bottom:12px;">
       <label>ID Pengguna</label>
@@ -683,7 +727,7 @@
 <div id="app" style="display:none;">
 
 <header>
-  <h1>📋 Order Management</h1>
+  <h1>Order Management</h1>
   <div style="display:flex;align-items:center;gap:16px;">
     <span id="live-date"></span>
     <span id="user-badge" style="font-size:13px;background:rgba(255,255,255,0.15);padding:5px 12px;border-radius:20px;"></span>
@@ -702,22 +746,17 @@
   <div class="card">
     <h2>Form Order Baru</h2>
     <div class="form-grid">
-      <div class="form-group">
-        <label>Tanggal</label>
-        <input type="text" id="order-date" readonly>
-      </div>
-      <div class="form-group">
-        <label>No. Order</label>
-        <input type="text" id="order-no" readonly>
-      </div>
-      <div class="form-group">
+      <div class="order-meta" id="order-meta" style="grid-column:1/-1;"></div>
+      <input type="hidden" id="order-date">
+      <input type="hidden" id="order-no">
+      <div class="form-group" id="fg-sales" style="grid-column:1/-1;">
         <label>Sales</label>
         <select id="order-sales">
           <option value="">-- Pilih Sales --</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Nama Pelanggan</label>
+      <div class="form-group" style="grid-column:1/-1;">
+        <label>Pelanggan</label>
         <div class="barang-wrap">
           <input type="text" id="order-customer" placeholder="Pilih / ketik pelanggan" autocomplete="off"
                  autocorrect="off" autocapitalize="off" spellcheck="false"
@@ -728,7 +767,7 @@
     </div>
 
     <div class="items-section">
-      <h3>Detail Barang</h3>
+      <h3>Barang</h3>
       <div class="item-row item-head" style="margin-bottom:6px;">
         <span style="font-size:12px;color:#888;font-weight:600;">BARANG</span>
         <span style="font-size:12px;color:#888;font-weight:600;">QTY</span>
@@ -753,22 +792,10 @@
 
 <!-- PAGE: ORDER LIST -->
 <div class="page" id="page-list">
-  <div class="summary-grid">
-    <div class="summary-card">
-      <div class="label">Jumlah Order</div>
-      <div class="value" id="sum-total">0</div>
-      <div class="sub" id="sum-sub1">hari ini</div>
-    </div>
-    <div class="summary-card">
-      <div class="label">Nilai Order</div>
-      <div class="value" id="sum-value">Rp 0</div>
-      <div class="sub" id="sum-sub2">hari ini</div>
-    </div>
-    <div class="summary-card">
-      <div class="label">Rata-rata / Order</div>
-      <div class="value" id="sum-avg">Rp 0</div>
-      <div class="sub" id="sum-sub3">hari ini</div>
-    </div>
+  <div class="hero-omset">
+    <div class="ho-label">OMSET</div>
+    <div class="ho-value" id="sum-value">Rp 0</div>
+    <div class="ho-sub"><span id="sum-total">0</span> order &middot; rata-rata <span id="sum-avg">Rp 0</span> &middot; <span id="sum-sub1">hari ini</span></div>
   </div>
 
   <div class="card">
@@ -790,24 +817,10 @@
       <select class="filter-select" onchange="filterOrders()" id="filter-sales">
         <option value="">Semua Sales</option>
       </select>
-      <button class="btn btn-outline btn-sm" id="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-outline btn-sm" id="export-btn" onclick="exportCSV()">Export CSV</button>
     </div>
-    <div class="table-wrap">
-      <table class="orders-table">
-        <thead>
-          <tr>
-            <th>No. Order</th>
-            <th>Tanggal</th>
-            <th>Sales</th>
-            <th>Pelanggan</th>
-            <th>Item</th>
-            <th>Total</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="orders-tbody"></tbody>
-      </table>
-    </div>
+    <div id="orders-list"></div>
+    <div class="list-hint">Ketuk order untuk detail, edit &amp; cetak nota</div>
   </div>
 </div>
 
@@ -842,9 +855,9 @@
     <h2>Detail Order</h2>
     <div id="modal-content"></div>
     <div class="modal-actions">
-      <button class="btn btn-danger btn-sm" onclick="deleteCurrentOrder()">🗑 Hapus</button>
-      <button class="btn btn-outline btn-sm" onclick="printNota(currentOrderId)">🖨 Nota</button>
-      <button class="btn btn-primary btn-sm" onclick="editOrder(currentOrderId)">✏ Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteCurrentOrder()">Hapus</button>
+      <button class="btn btn-outline btn-sm" onclick="printNota(currentOrderId)">Nota</button>
+      <button class="btn btn-primary btn-sm" onclick="editOrder(currentOrderId)">Edit</button>
       <button class="btn btn-outline" onclick="closeModal()">Tutup</button>
     </div>
   </div>
@@ -852,13 +865,16 @@
 
 <nav class="bottomnav" id="bottomnav">
   <button class="bn-item active" data-tab="order" onclick="showTab('order')">
-    <span class="bn-ic">➕</span><span class="bn-lb">Buat</span>
+    <svg class="bn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+    <span class="bn-lb">Buat</span>
   </button>
   <button class="bn-item" data-tab="list" onclick="showTab('list')">
-    <span class="bn-ic">📋</span><span class="bn-lb" id="bn-list-lb">Order</span>
+    <svg class="bn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><line x1="4.5" y1="6" x2="4.51" y2="6"/><line x1="4.5" y1="12" x2="4.51" y2="12"/><line x1="4.5" y1="18" x2="4.51" y2="18"/></svg>
+    <span class="bn-lb" id="bn-list-lb">Order</span>
   </button>
   <button class="bn-item" id="bn-admin" data-tab="admin" onclick="showTab('admin')">
-    <span class="bn-ic">⚙️</span><span class="bn-lb">Atur</span>
+    <svg class="bn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="bn-lb">Atur</span>
   </button>
 </nav>
 
@@ -945,7 +961,8 @@ async function doLogin() {
   try {
     const d = await fetchData(id, pin);
     if (!d.ok) { err.textContent = 'ID atau PIN salah.'; return; }
-    currentUser = { id, pin, role: d.role };
+    // Pakai ID resmi dari server (d.me) agar "rei" dikenali sebagai "REI"
+    currentUser = { id: d.me || id, pin, role: d.role };
     sessionStorage.setItem('auth', JSON.stringify(currentUser));
     applyData(d);
     enterApp();
@@ -1027,16 +1044,23 @@ function showTab(t) {
   if (t === 'admin') renderAdmin();
 }
 
+function refreshOrderMeta() {
+  document.getElementById('order-meta').textContent =
+    document.getElementById('order-date').value + '  ·  ' + document.getElementById('order-no').value;
+}
+
 function initForm() {
   editingNo = null;
-  document.querySelector('#page-order .card h2').textContent = 'Form Order Baru';
-  document.getElementById('save-btn').textContent = '💾 Simpan Order';
+  document.querySelector('#page-order .card h2').textContent = 'Order Baru';
+  document.getElementById('save-btn').textContent = 'Simpan Order';
   document.getElementById('order-date').value = today();
   document.getElementById('order-no').value = genOrderNo();
+  refreshOrderMeta();
   document.getElementById('items-container').innerHTML = '';
   refreshBarangOptions();
   const sel = document.getElementById('order-sales');
   if (isAdmin()) {
+    document.getElementById('fg-sales').style.display = '';
     sel.disabled = false;
     sel.innerHTML = '<option value="">-- Pilih Sales --</option>';
     salesList.forEach(s => {
@@ -1045,7 +1069,8 @@ function initForm() {
       sel.appendChild(o);
     });
   } else {
-    // Sales hanya bisa atas namanya sendiri
+    // Sales hanya atas namanya sendiri — kolom disembunyikan, identitas ada di chip header
+    document.getElementById('fg-sales').style.display = 'none';
     sel.innerHTML = `<option value="${currentUser.id}">${currentUser.id}</option>`;
     sel.value = currentUser.id;
     sel.disabled = true;
@@ -1064,9 +1089,10 @@ function editOrder(no) {
   initForm();
   editingNo = no;
   document.querySelector('#page-order .card h2').textContent = 'Edit Order — ' + no;
-  document.getElementById('save-btn').textContent = '💾 Simpan Perubahan';
+  document.getElementById('save-btn').textContent = 'Simpan Perubahan';
   document.getElementById('order-date').value = o.date;
   document.getElementById('order-no').value = o.no;
+  refreshOrderMeta();
   document.getElementById('order-sales').value = o.sales;
   document.getElementById('order-customer').value = o.customer;
   document.getElementById('items-container').innerHTML = '';
@@ -1089,17 +1115,35 @@ function addItemRow() {
   div.id = id;
 
   div.innerHTML = `
-    <div class="barang-wrap">
-      <input class="barang-input" placeholder="Pilih / ketik barang" autocomplete="off"
-             autocorrect="off" autocapitalize="off" spellcheck="false"
-             oninput="onBarangInput(this)" onfocus="onBarangInput(this)" onblur="hideBarangDrop(this)">
-      <div class="barang-drop"></div>
+    <div class="ic-top">
+      <div class="barang-wrap">
+        <input class="barang-input" placeholder="Pilih / ketik barang" autocomplete="off"
+               autocorrect="off" autocapitalize="off" spellcheck="false"
+               oninput="onBarangInput(this)" onfocus="onBarangInput(this)" onblur="hideBarangDrop(this)">
+        <div class="barang-drop"></div>
+      </div>
+      <button class="ic-x" onclick="removeRow('${id}')" aria-label="Hapus barang">&times;</button>
     </div>
-    <input type="number" min="1" value="1" placeholder="Qty" oninput="calcTotal()">
-    <input type="number" min="0" value="0" placeholder="Harga" oninput="calcTotal()">
-    <button class="btn btn-danger btn-icon" onclick="removeRow('${id}')">✕</button>
+    <div class="ic-row">
+      <div class="stepper">
+        <button type="button" onclick="stepQty('${id}', -1)" aria-label="Kurangi">&minus;</button>
+        <input type="number" min="1" value="1" oninput="calcTotal()">
+        <button type="button" onclick="stepQty('${id}', 1)" aria-label="Tambah">+</button>
+      </div>
+      <span class="ic-kali">&times;</span>
+      <input type="number" min="0" value="0" placeholder="Harga" class="harga-input" oninput="calcTotal()">
+      <span class="ic-sub">Rp 0</span>
+    </div>
   `;
   document.getElementById('items-container').appendChild(div);
+  calcTotal();
+}
+
+function stepQty(id, delta) {
+  const row = document.getElementById(id);
+  if (!row) return;
+  const inp = row.querySelectorAll('input[type=number]')[0];
+  inp.value = Math.max(1, (parseInt(inp.value, 10) || 1) + delta);
   calcTotal();
 }
 
@@ -1215,7 +1259,10 @@ function calcTotal() {
     const nums = row.querySelectorAll('input[type=number]');
     const qty = parseFloat(nums[0].value) || 0;
     const harga = parseFloat(nums[1].value) || 0;
-    total += qty * harga;
+    const sub = qty * harga;
+    const subEl = row.querySelector('.ic-sub');
+    if (subEl) subEl.textContent = formatRp(sub);
+    total += sub;
   });
   document.getElementById('grand-total').textContent = formatRp(total);
 }
@@ -1367,25 +1414,30 @@ function filterOrders() {
   const filtered = base.filter(o =>
     o.no.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q) || o.sales.toLowerCase().includes(q)
   );
-  const tbody = document.getElementById('orders-tbody');
+  const wrap = document.getElementById('orders-list');
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="no-data">Tidak ada order pada periode ini</td></tr>`;
+    wrap.innerHTML = `<div class="no-data">Tidak ada order pada periode ini</div>`;
     return;
   }
-  tbody.innerHTML = filtered.map(o => `
-    <tr>
-      <td data-label="No. Order"><b>${o.no}</b></td>
-      <td data-label="Tanggal">${o.date}</td>
-      <td data-label="Sales">${o.sales}</td>
-      <td data-label="Pelanggan">${o.customer}</td>
-      <td data-label="Item">${o.items.length} item(s)</td>
-      <td data-label="Total"><b>${formatRp(o.total)}</b></td>
-      <td data-label="Aksi" class="row-actions">
-        <button class="btn btn-outline btn-sm" onclick="showDetail('${o.no}')">Detail</button>
-        <button class="btn btn-primary btn-sm" onclick="editOrder('${o.no}')">Edit</button>
-      </td>
-    </tr>
-  `).join('');
+  const harian = document.getElementById('filter-period').value === 'harian';
+  wrap.innerHTML = filtered.map(o => {
+    let jam = '';
+    if (o.createdAt) {
+      const d = new Date(o.createdAt);
+      if (!isNaN(d)) jam = String(d.getHours()).padStart(2, '0') + '.' + String(d.getMinutes()).padStart(2, '0');
+    }
+    const when = (harian && jam) ? jam : o.date;
+    const meta = [isAdmin() ? o.sales : '', when, o.items.length + ' barang', o.notaNo || 'belum dinota']
+      .filter(Boolean).join(' · ');
+    return `
+    <div class="order-row" onclick="showDetail('${o.no}')">
+      <div class="or-left">
+        <div class="or-cust">${esc(o.customer)}</div>
+        <div class="or-meta">${esc(meta)}</div>
+      </div>
+      <div class="or-total">${formatRp(o.total)}</div>
+    </div>`;
+  }).join('');
 }
 
 function updateSummary(list) {
@@ -1396,10 +1448,7 @@ function updateSummary(list) {
   document.getElementById('sum-total').textContent = count;
   document.getElementById('sum-value').textContent = formatRp(total);
   document.getElementById('sum-avg').textContent = formatRp(avg);
-  const lbl = periodLabel();
-  document.getElementById('sum-sub1').textContent = lbl;
-  document.getElementById('sum-sub2').textContent = lbl;
-  document.getElementById('sum-sub3').textContent = lbl;
+  document.getElementById('sum-sub1').textContent = periodLabel();
 }
 
 function showDetail(no) {
@@ -1668,7 +1717,7 @@ setInterval(updateClock, 1000);
       const u = JSON.parse(saved);
       const d = await fetchData(u.id, u.pin);
       if (d.ok) {
-        currentUser = { id: u.id, pin: u.pin, role: d.role };
+        currentUser = { id: d.me || u.id, pin: u.pin, role: d.role };
         applyData(d);
         enterApp();
         return;
