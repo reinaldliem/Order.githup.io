@@ -626,6 +626,33 @@
     padding: 10px 12px !important;
     font-size: 16px !important;
   }
+
+  /* ============================================================
+     CETAK NOTA — area khusus yang hanya muncul di dialog print
+     ============================================================ */
+  #nota-area { display: none; font-family: Arial, sans-serif; color: #000; }
+  @page { size: A4 portrait; margin: 12mm; }
+  @media print {
+    body.printing-nota #app,
+    body.printing-nota .login-overlay,
+    body.printing-nota .toast { display: none !important; }
+    body.printing-nota #nota-area { display: block !important; }
+  }
+  #nota-area .nt-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2.5px solid #000; padding-bottom: 10px; }
+  #nota-area .nt-toko { font-size: 19px; font-weight: 700; letter-spacing: 0.4px; }
+  #nota-area .nt-alamat { font-size: 12px; margin-top: 3px; }
+  #nota-area .nt-title { font-size: 17px; font-weight: 700; text-align: right; }
+  #nota-area .nt-no { font-size: 12px; text-align: right; margin-top: 3px; }
+  #nota-area .nt-info { display: flex; justify-content: space-between; margin: 10px 0 4px; font-size: 12.5px; }
+  #nota-area table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  #nota-area th, #nota-area td { border: 1px solid #000; padding: 6px 8px; font-size: 12.5px; text-align: left; }
+  #nota-area th { background: #eee; }
+  #nota-area .nt-num { text-align: right; }
+  #nota-area .nt-total td { font-weight: 700; }
+  #nota-area .nt-terbilang { font-size: 12px; font-style: italic; margin-top: 6px; }
+  #nota-area .nt-ttd { display: flex; justify-content: space-between; margin-top: 34px; text-align: center; font-size: 12.5px; }
+  #nota-area .nt-ttd > div { width: 180px; }
+  #nota-area .nt-ttd .nt-line { margin-top: 56px; border-top: 1px solid #000; padding-top: 4px; }
 </style>
 </head>
 <body>
@@ -808,6 +835,7 @@
     <div id="modal-content"></div>
     <div class="modal-actions">
       <button class="btn btn-danger btn-sm" onclick="deleteCurrentOrder()">🗑 Hapus</button>
+      <button class="btn btn-outline btn-sm" onclick="printNota(currentOrderId)">🖨 Nota</button>
       <button class="btn btn-primary btn-sm" onclick="editOrder(currentOrderId)">✏ Edit</button>
       <button class="btn btn-outline" onclick="closeModal()">Tutup</button>
     </div>
@@ -828,6 +856,9 @@
 
 </div><!-- /#app -->
 
+<!-- AREA CETAK NOTA — hanya tampil saat print -->
+<div id="nota-area"></div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -840,6 +871,10 @@
 ==================================================================== */
 const API_URL = 'https://script.google.com/macros/s/AKfycbyjUGVPHqmzybXiUKtCBIcRWKMtFOzCFykWpoYSMJ0mhHHw1lYNDxM42NiixNk5zBEB/exec';
 const USE_SERVER = !!API_URL;
+
+/* Identitas toko untuk cetak nota — silakan ganti sesuai toko Anda */
+const NOTA_TOKO = 'NAMA TOKO ANDA';
+const NOTA_ALAMAT = 'Alamat toko — Telp/WA: 08xx-xxxx-xxxx';
 
 let orders = [];
 let salesList = [];
@@ -1423,6 +1458,77 @@ async function removeUser(id) {
     showToast('Akun dihapus.');
   } catch (e) { showToast('Gagal menghapus akun!', 'error'); console.error(e); }
 }
+
+/* ---------- Cetak Nota ---------- */
+function terbilang(n) {
+  const kata = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas'];
+  function angka(x) {
+    if (x < 12) return kata[x];
+    if (x < 20) return angka(x - 10) + ' belas';
+    if (x < 100) return angka(Math.floor(x / 10)) + ' puluh ' + angka(x % 10);
+    if (x < 200) return 'seratus ' + angka(x - 100);
+    if (x < 1000) return angka(Math.floor(x / 100)) + ' ratus ' + angka(x % 100);
+    if (x < 2000) return 'seribu ' + angka(x - 1000);
+    if (x < 1e6) return angka(Math.floor(x / 1000)) + ' ribu ' + angka(x % 1000);
+    if (x < 1e9) return angka(Math.floor(x / 1e6)) + ' juta ' + angka(x % 1e6);
+    if (x < 1e12) return angka(Math.floor(x / 1e9)) + ' miliar ' + angka(x % 1e9);
+    return angka(Math.floor(x / 1e12)) + ' triliun ' + angka(x % 1e12);
+  }
+  n = Math.floor(Math.abs(Number(n) || 0));
+  if (n === 0) return 'nol';
+  return angka(n).replace(/\s+/g, ' ').trim();
+}
+
+function printNota(no) {
+  const o = orders.find(x => x.no === no);
+  if (!o) return;
+  const rows = o.items.map((it, i) => `
+    <tr>
+      <td style="width:34px;text-align:center;">${i + 1}</td>
+      <td>${esc(it.barang)}</td>
+      <td class="nt-num" style="width:56px;">${esc(it.qty)}</td>
+      <td class="nt-num" style="width:110px;">${formatRp(it.harga)}</td>
+      <td class="nt-num" style="width:120px;">${formatRp(it.subtotal)}</td>
+    </tr>`).join('');
+  document.getElementById('nota-area').innerHTML = `
+    <div class="nt-top">
+      <div>
+        <div class="nt-toko">${esc(NOTA_TOKO)}</div>
+        <div class="nt-alamat">${esc(NOTA_ALAMAT)}</div>
+      </div>
+      <div>
+        <div class="nt-title">NOTA PENJUALAN</div>
+        <div class="nt-no">${esc(o.no)}</div>
+      </div>
+    </div>
+    <div class="nt-info">
+      <div>Pelanggan: <b>${esc(o.customer)}</b><br>Sales: ${esc(o.sales)}</div>
+      <div style="text-align:right;">Tanggal: ${esc(o.date)}</div>
+    </div>
+    <table>
+      <thead><tr>
+        <th style="text-align:center;">No</th>
+        <th>Nama Barang</th>
+        <th class="nt-num">Qty</th>
+        <th class="nt-num">Harga</th>
+        <th class="nt-num">Subtotal</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr class="nt-total">
+        <td colspan="4" style="text-align:right;">TOTAL</td>
+        <td class="nt-num">${formatRp(o.total)}</td>
+      </tr></tfoot>
+    </table>
+    <div class="nt-terbilang">Terbilang: <b>${terbilang(o.total)} rupiah</b></div>
+    <div class="nt-ttd">
+      <div>Penerima,<div class="nt-line">${esc(o.customer)}</div></div>
+      <div>Hormat kami,<div class="nt-line">${esc(o.sales)}</div></div>
+    </div>`;
+  document.body.classList.add('printing-nota');
+  setTimeout(() => window.print(), 60);
+}
+
+window.addEventListener('afterprint', () => document.body.classList.remove('printing-nota'));
 
 function exportCSV() {
   if (!isAdmin()) { showToast('Hanya admin yang bisa export.', 'error'); return; }
