@@ -517,6 +517,10 @@
   }
   .item-head { display: none !important; }
   .barang-drop { border-radius: 12px; box-shadow: var(--shadow-md); }
+  .stok-badge { font-size: 11px; font-weight: 600; margin-left: 8px; padding: 1px 7px; border-radius: 9px; }
+  .stok-badge.ada { background: var(--soft-hover); color: var(--brand); }
+  .stok-badge.habis { background: #fdeaea; color: #c62828; }
+  .ic-warn { font-size: 11.5px; color: #c62828; margin-top: 8px; }
 
   /* Bar aksi order (Total + Simpan) — nempel bawah */
   .order-actionbar {
@@ -847,6 +851,8 @@
       <select id="new-user-role" style="padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;">
         <option value="sales">Sales</option>
         <option value="admin">Admin</option>
+        <option value="stokist">Admin Stokist</option>
+        <option value="penagihan">Admin Penagihan</option>
       </select>
       <button class="btn btn-primary" onclick="addUser()">Tambah Akun</button>
     </div>
@@ -860,6 +866,9 @@
     </p>
   </div>
 </div>
+
+<!-- PAGE: INFO (peran stokist / penagihan) -->
+<div class="page" id="page-info"></div>
 
 <!-- DETAIL MODAL -->
 <div class="modal-overlay" id="detail-modal">
@@ -916,6 +925,8 @@ let priceMap = {};
 let customerMap = {};   // { KODE_SALES: [nama toko, ...] }
 let custAddrMap = {};   // { nama toko: alamat }
 let piutangMap = {};    // { NAMA TOKO (uppercase): {piutang, plafon} }
+let stockNum = {};      // { barang: angka } — hanya admin/stokist
+let stockAvail = {};    // { barang: true/false } — sales (Ada/Habis)
 let usersList = [];
 let currentUser = null;   // { id, pin, role }
 let currentOrderId = null;
@@ -940,6 +951,8 @@ function applyData(d) {
   customerMap = d.customerMap || {};
   custAddrMap = d.custAddr || {};
   piutangMap = d.piutangMap || {};
+  stockNum = d.stockNum || {};
+  stockAvail = d.stockAvail || {};
   usersList = d.users || [];
 }
 
@@ -997,14 +1010,36 @@ function logout() {
   document.getElementById('login-pin').value = '';
 }
 
+const ROLE_LABEL = { admin: 'Admin', sales: 'Sales', stokist: 'Admin Stokist', penagihan: 'Admin Penagihan' };
+function isStaffOnly() { return currentUser && (currentUser.role === 'stokist' || currentUser.role === 'penagihan'); }
+
 function enterApp() {
   document.getElementById('login-overlay').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('user-badge').textContent =
-    currentUser.id + ' · ' + (isAdmin() ? 'Admin' : 'Sales');
+    currentUser.id + ' · ' + (ROLE_LABEL[currentUser.role] || currentUser.role);
+  document.getElementById('bottomnav').style.display = '';   // reset (bisa disembunyikan peran staff)
+  document.getElementById('page-info').classList.remove('active');
   applyRoleUI();
+  if (isStaffOnly()) { showInfoPage(); return; }
   initForm();
   showTab('order');
+}
+
+/* Peran stokist/penagihan: layar khusus menyusul — tampilkan landing netral */
+function showInfoPage() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('bottomnav').style.display = 'none';
+  const pesan = currentUser.role === 'stokist'
+    ? 'Kelola stok barang langsung di <b>Google Sheet</b>, tab <b>Barang</b> (kolom <b>Stok</b>). Fitur stok khusus di aplikasi sedang disiapkan.'
+    : 'Fitur pencatatan pembayaran & daftar piutang untuk Anda sedang disiapkan (menyusul).';
+  const info = document.getElementById('page-info');
+  info.innerHTML = `<div class="card" style="text-align:center;">
+      <h2 style="justify-content:center;">Halo, ${esc(currentUser.id)}</h2>
+      <p style="color:var(--muted);font-size:11px;letter-spacing:0.8px;margin-bottom:12px;">${(ROLE_LABEL[currentUser.role]||'').toUpperCase()}</p>
+      <p style="color:var(--brand-dark);line-height:1.6;">${pesan}</p>
+    </div>`;
+  info.classList.add('active');
 }
 
 /* Sembunyikan menu/tombol yang bukan untuk peran ini */
@@ -1144,13 +1179,14 @@ function addItemRow() {
     <div class="ic-row">
       <div class="stepper">
         <button type="button" onclick="stepQty('${id}', -1)" aria-label="Kurangi">&minus;</button>
-        <input type="number" min="1" value="1" oninput="calcTotal()">
+        <input type="number" min="1" value="1" oninput="calcTotal(); checkStock(this.closest('.item-row'))">
         <button type="button" onclick="stepQty('${id}', 1)" aria-label="Tambah">+</button>
       </div>
       <span class="ic-kali">&times;</span>
       <input type="number" min="0" value="0" placeholder="Harga" class="harga-input" oninput="calcTotal()">
       <span class="ic-sub">Rp 0</span>
     </div>
+    <div class="ic-warn" style="display:none;"></div>
   `;
   document.getElementById('items-container').appendChild(div);
   calcTotal();
@@ -1161,6 +1197,7 @@ function stepQty(id, delta) {
   if (!row) return;
   const inp = row.querySelectorAll('input[type=number]')[0];
   inp.value = Math.max(1, (parseInt(inp.value, 10) || 1) + delta);
+  checkStock(row);
   calcTotal();
 }
 
@@ -1198,7 +1235,9 @@ function onBarangInput(inp) {
   }
   drop.innerHTML = shown.map(b => {
     const harga = priceMap[b] ? '<span class="op">' + formatRp(priceMap[b]) + '</span>' : '';
-    return `<div class="barang-opt" data-name="${esc(b)}" onmousedown="pickBarang(event, this)">${esc(b)}${harga}</div>`;
+    const st = stockInfo(b);
+    const badge = st.label ? `<span class="stok-badge ${st.habis ? 'habis' : 'ada'}">${st.label}</span>` : '';
+    return `<div class="barang-opt" data-name="${esc(b)}" onmousedown="pickBarang(event, this)">${esc(b)}${badge}${harga}</div>`;
   }).join('');
   if (list.length > 60) drop.innerHTML += '<div class="barang-opt-empty">… ketik untuk mempersempit pencarian</div>';
   drop.style.display = 'block';
@@ -1214,7 +1253,35 @@ function pickBarang(ev, el) {
   const row = wrap.closest('.item-row');
   const priceInput = row.querySelectorAll('input[type=number]')[1];
   if (priceMap[name] && (!priceInput.value || priceInput.value === '0')) priceInput.value = priceMap[name];
+  checkStock(row);
   calcTotal();
+}
+
+/* Info stok satu barang, sesuai peran (angka utk admin/stokist, Ada/Habis utk sales) */
+function stockInfo(name) {
+  if (Object.prototype.hasOwnProperty.call(stockNum, name)) {
+    const n = Number(stockNum[name]);
+    return { known: true, qty: n, habis: n <= 0, label: n <= 0 ? 'HABIS' : ('Sisa ' + n) };
+  }
+  if (Object.prototype.hasOwnProperty.call(stockAvail, name)) {
+    const ada = !!stockAvail[name];
+    return { known: true, qty: null, habis: !ada, label: ada ? 'Tersedia' : 'HABIS' };
+  }
+  return { known: false, qty: null, habis: false, label: '' };   // stok tak diketahui → tidak digerbang
+}
+
+/* Peringatan lunak: barang habis / qty melebihi stok (order tetap boleh disimpan) */
+function checkStock(row) {
+  const name = row.querySelector('.barang-input').value.trim();
+  const qty = parseFloat(row.querySelectorAll('input[type=number]')[0].value) || 0;
+  const warnEl = row.querySelector('.ic-warn');
+  const st = stockInfo(name);
+  let msg = '';
+  if (name && st.known) {
+    if (st.habis) msg = 'Stok habis — akan jadi pendingan saat dinota';
+    else if (st.qty !== null && qty > st.qty) msg = 'Melebihi stok (sisa ' + st.qty + ')';
+  }
+  if (warnEl) { warnEl.textContent = msg; warnEl.style.display = msg ? '' : 'none'; }
 }
 
 function hideBarangDrop(inp) {
