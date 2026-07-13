@@ -582,6 +582,17 @@
   /* Meta order (tanggal · no. order) di form */
   .order-meta { font-size: 11.5px; color: var(--muted); margin: -6px 0 12px; }
 
+  /* Info piutang/plafon di bawah kolom pelanggan */
+  .piutang-info { font-size: 11.5px; color: var(--muted); margin-top: 6px; min-height: 0; }
+  .piutang-info.over { color: #c62828; font-weight: 500; }
+
+  /* Badge order menunggu persetujuan */
+  .or-pend {
+    display: inline-block; background: #fff3e0; color: #e65100;
+    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+    margin-left: 6px; vertical-align: 1px;
+  }
+
   /* ===== Tata letak app (berlaku semua ukuran — satu tampilan gaya mobile) ===== */
   @media (min-width: 0px) {
     .tabs { display: none; }
@@ -760,9 +771,10 @@
         <div class="barang-wrap">
           <input type="text" id="order-customer" placeholder="Pilih / ketik pelanggan" autocomplete="off"
                  autocorrect="off" autocapitalize="off" spellcheck="false"
-                 oninput="onCustInput(this)" onfocus="onCustInput(this)" onblur="hideBarangDrop(this)">
+                 oninput="onCustInput(this); updatePiutangInfo()" onfocus="onCustInput(this)" onblur="hideBarangDrop(this)">
           <div class="barang-drop"></div>
         </div>
+        <div class="piutang-info" id="piutang-info"></div>
       </div>
     </div>
 
@@ -856,6 +868,7 @@
     <div id="modal-content"></div>
     <div class="modal-actions">
       <button class="btn btn-danger btn-sm" onclick="deleteCurrentOrder()">Hapus</button>
+      <button class="btn btn-success btn-sm" id="approve-btn" style="display:none;" onclick="approveOrder(currentOrderId)">Setujui</button>
       <button class="btn btn-outline btn-sm" onclick="printNota(currentOrderId)">Nota</button>
       <button class="btn btn-primary btn-sm" onclick="editOrder(currentOrderId)">Edit</button>
       <button class="btn btn-outline" onclick="closeModal()">Tutup</button>
@@ -902,6 +915,7 @@ let barangList = [];
 let priceMap = {};
 let customerMap = {};   // { KODE_SALES: [nama toko, ...] }
 let custAddrMap = {};   // { nama toko: alamat }
+let piutangMap = {};    // { NAMA TOKO (uppercase): {piutang, plafon} }
 let usersList = [];
 let currentUser = null;   // { id, pin, role }
 let currentOrderId = null;
@@ -925,6 +939,7 @@ function applyData(d) {
   priceMap = d.priceMap || {};
   customerMap = d.customerMap || {};
   custAddrMap = d.custAddr || {};
+  piutangMap = d.piutangMap || {};
   usersList = d.users || [];
 }
 
@@ -1021,7 +1036,7 @@ function genOrderNo() {
   const d = new Date();
   const p = n => String(n).padStart(2, '0');
   const stamp = `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
-  const rnd = String(Math.floor(Math.random() * 90) + 10); // 2 digit, hindari tabrakan antar-sales
+  const rnd = String(Math.floor(Math.random() * 900) + 100); // 3 digit, perkecil peluang tabrakan antar-sales
   return `ORD-${stamp}-${rnd}`;
 }
 
@@ -1076,6 +1091,7 @@ function initForm() {
     sel.disabled = true;
   }
   document.getElementById('order-customer').value = '';
+  updatePiutangInfo();
   itemCount = 0;
   addItemRow();
   calcTotal();
@@ -1095,6 +1111,7 @@ function editOrder(no) {
   refreshOrderMeta();
   document.getElementById('order-sales').value = o.sales;
   document.getElementById('order-customer').value = o.customer;
+  updatePiutangInfo();
   document.getElementById('items-container').innerHTML = '';
   o.items.forEach(it => {
     addItemRow();
@@ -1243,6 +1260,21 @@ function pickCust(ev, el) {
   const wrap = el.closest('.barang-wrap');
   wrap.querySelector('input').value = el.getAttribute('data-name');
   wrap.querySelector('.barang-drop').style.display = 'none';
+  updatePiutangInfo();
+}
+
+/* Tampilkan piutang & plafon toko yang dipilih; peringatkan bila melebihi */
+function updatePiutangInfo() {
+  const el = document.getElementById('piutang-info');
+  if (!el) return;
+  const cust = document.getElementById('order-customer').value.trim().toUpperCase();
+  const rec = cust ? piutangMap[cust] : null;
+  if (!rec) { el.textContent = ''; el.classList.remove('over'); return; }
+  const over = rec.plafon !== null && Number(rec.piutang) > Number(rec.plafon);
+  const plafonTxt = rec.plafon === null ? 'tanpa batas' : formatRp(rec.plafon);
+  el.textContent = `Piutang ${formatRp(rec.piutang)} · Plafon ${plafonTxt}` +
+    (over ? ' — melebihi plafon, order akan menunggu ACC admin' : '');
+  el.classList.toggle('over', over);
 }
 
 function refreshBarangOptions() { /* tidak dipakai lagi (dropdown custom) */ }
@@ -1306,9 +1338,13 @@ async function saveOrder() {
         createdAt: new Date().toISOString()
       };
     }
-    await apiPost({ action: 'saveOrder', order });
+    const res = await apiPost({ action: 'saveOrder', order });
     await loadData();
-    showToast(editingNo ? 'Perubahan order disimpan!' : 'Order berhasil disimpan!');
+    if (res && res.status === 'pending') {
+      showToast('Order tersimpan — menunggu persetujuan admin (piutang melebihi plafon).');
+    } else {
+      showToast(editingNo ? 'Perubahan order disimpan!' : 'Order berhasil disimpan!');
+    }
     const wasEditing = editingNo;
     resetForm();
     if (wasEditing) showTab('list');
@@ -1429,10 +1465,11 @@ function filterOrders() {
     const when = (harian && jam) ? jam : o.date;
     const meta = [isAdmin() ? o.sales : '', when, o.items.length + ' barang', o.notaNo || 'belum dinota']
       .filter(Boolean).join(' · ');
+    const pend = o.status === 'pending' ? '<span class="or-pend">Menunggu ACC</span>' : '';
     return `
     <div class="order-row" onclick="showDetail('${o.no}')">
       <div class="or-left">
-        <div class="or-cust">${esc(o.customer)}</div>
+        <div class="or-cust">${esc(o.customer)}${pend}</div>
         <div class="or-meta">${esc(meta)}</div>
       </div>
       <div class="or-total">${formatRp(o.total)}</div>
@@ -1457,8 +1494,8 @@ function showDetail(no) {
   currentOrderId = no;
   const rows = o.items.map(i => `
     <tr>
-      <td>${i.barang}</td>
-      <td style="text-align:center">${i.qty}</td>
+      <td>${esc(i.barang)}</td>
+      <td style="text-align:center">${esc(i.qty)}</td>
       <td>${formatRp(i.harga)}</td>
       <td>${formatRp(i.subtotal)}</td>
     </tr>
@@ -1466,12 +1503,18 @@ function showDetail(no) {
   const notaRow = o.notaNo
     ? `<div class="detail-row"><span class="dk">No. Nota</span><span class="dv">${esc(o.notaNo)}</span></div>`
     : '';
+  const statusRow = o.status === 'pending'
+    ? `<div class="detail-row"><span class="dk">Status</span><span class="dv" style="color:#e65100;">Menunggu persetujuan admin</span></div>`
+    : '';
+  const approveBtn = document.getElementById('approve-btn');
+  if (approveBtn) approveBtn.style.display = (isAdmin() && o.status === 'pending') ? '' : 'none';
   document.getElementById('modal-content').innerHTML = `
-    <div class="detail-row"><span class="dk">No. Order</span><span class="dv">${o.no}</span></div>
+    <div class="detail-row"><span class="dk">No. Order</span><span class="dv">${esc(o.no)}</span></div>
     ${notaRow}
-    <div class="detail-row"><span class="dk">Tanggal</span><span class="dv">${o.date}</span></div>
-    <div class="detail-row"><span class="dk">Sales</span><span class="dv">${o.sales}</span></div>
-    <div class="detail-row"><span class="dk">Pelanggan</span><span class="dv">${o.customer}</span></div>
+    ${statusRow}
+    <div class="detail-row"><span class="dk">Tanggal</span><span class="dv">${esc(o.date)}</span></div>
+    <div class="detail-row"><span class="dk">Sales</span><span class="dv">${esc(o.sales)}</span></div>
+    <div class="detail-row"><span class="dk">Pelanggan</span><span class="dv">${esc(o.customer)}</span></div>
     <div style="margin-top:14px;">
       <table class="detail-table" style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead><tr style="background:var(--soft);">
@@ -1577,9 +1620,29 @@ function terbilang(n) {
   return angka(n).replace(/\s+/g, ' ').trim();
 }
 
+async function approveOrder(no) {
+  if (!no) return;
+  if (!confirm('Setujui order ' + no + '?')) return;
+  try {
+    const r = await apiPost({ action: 'approveOrder', no });
+    if (!r.ok) { showToast('Gagal menyetujui order.', 'error'); return; }
+    await loadData();
+    closeModal();
+    filterOrders();
+    showToast('Order disetujui — nota bisa dicetak.');
+  } catch (e) {
+    showToast('Gagal menyetujui order.', 'error');
+    console.error(e);
+  }
+}
+
 async function printNota(no) {
   const o = orders.find(x => x.no === no);
   if (!o) return;
+  if (o.status === 'pending') {
+    showToast('Order menunggu persetujuan admin — nota belum bisa dicetak.', 'error');
+    return;
+  }
   // Nomor nota berurutan dari server — dibuat sekali, cetak ulang nomornya tetap
   let notaNo = o.notaNo || '';
   if (!notaNo) {
@@ -1587,6 +1650,10 @@ async function printNota(no) {
     try {
       const r = await apiPost({ action: 'getNotaNo', no });
       if (r.ok && r.notaNo) { notaNo = r.notaNo; o.notaNo = notaNo; }
+      else if (r.error === 'pending') {
+        showToast('Order menunggu persetujuan admin — nota belum bisa dicetak.', 'error');
+        return;
+      }
     } catch (e) { console.error(e); }
   }
   if (!notaNo) {
