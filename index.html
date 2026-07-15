@@ -597,6 +597,41 @@
     margin-left: 6px; vertical-align: 1px;
   }
 
+  /* ===== Beranda (pengumuman) ===== */
+  #compose-card textarea {
+    width: 100%; border: 1.5px solid var(--line); border-radius: 11px;
+    padding: 10px 12px; font-size: 16px; font-family: inherit; color: var(--brand-dark);
+    resize: vertical; margin-bottom: 10px;
+  }
+  #compose-card textarea:focus { outline: none; border-color: var(--brand); }
+  .compose-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .compose-grid input {
+    border: 1.5px solid var(--line); border-radius: 11px; padding: 10px 12px;
+    font-size: 16px; color: var(--brand-dark); min-width: 0;
+  }
+  .compose-grid input:focus { outline: none; border-color: var(--brand); }
+  #post-image { display: none; }
+  .file-label {
+    display: block; text-align: center; border: 1.5px dashed #9dc3c1; color: var(--brand);
+    border-radius: 11px; padding: 11px; font-size: 12.5px; font-weight: 500; cursor: pointer;
+  }
+  .file-label:hover { background: var(--soft); }
+  #post-preview { margin-top: 10px; }
+  .post-card {
+    background: #fff; border: 1px solid var(--line); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 10px;
+  }
+  .post-head { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .post-text { font-size: 14px; line-height: 1.55; color: var(--brand-dark); white-space: pre-wrap; }
+  .post-img { width: 100%; max-width: 100%; border-radius: 10px; margin-top: 10px; display: block; }
+  .post-prices { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .price-chip {
+    background: var(--soft); border-radius: 9px; padding: 6px 10px;
+    font-size: 12px; color: var(--muted);
+  }
+  .price-chip b { color: var(--brand-dark); }
+  .post-actions { display: flex; gap: 8px; margin-top: 12px; }
+
   /* ===== Tata letak app (berlaku semua ukuran — satu tampilan gaya mobile) ===== */
   @media (min-width: 0px) {
     .tabs { display: none; }
@@ -868,7 +903,22 @@
 </div>
 
 <!-- PAGE: INFO (peran stokist / penagihan) -->
-<div class="page" id="page-info"></div>
+<!-- PAGE: BERANDA -->
+<div class="page" id="page-home">
+  <div class="card" id="compose-card" style="display:none;">
+    <h2>Buat Pengumuman</h2>
+    <textarea id="post-text" rows="3" placeholder="Tulis pengumuman... (kenaikan harga, produk baru, dll.)"></textarea>
+    <div class="compose-grid">
+      <input type="number" id="post-harga" placeholder="Harga jual (opsional)" min="0">
+      <input type="number" id="post-hpp" placeholder="HPP (opsional)" min="0">
+    </div>
+    <label class="file-label" for="post-image">+ Pilih foto produk (opsional)</label>
+    <input type="file" id="post-image" accept="image/*" onchange="onPostImage(this)">
+    <div id="post-preview"></div>
+    <button class="btn btn-success" id="post-btn" onclick="savePost()" style="width:100%;margin-top:10px;">Posting</button>
+  </div>
+  <div id="posts-feed"></div>
+</div>
 
 <!-- DETAIL MODAL -->
 <div class="modal-overlay" id="detail-modal">
@@ -886,11 +936,15 @@
 </div>
 
 <nav class="bottomnav" id="bottomnav">
-  <button class="bn-item active" data-tab="order" onclick="showTab('order')">
+  <button class="bn-item" data-tab="home" onclick="showTab('home')">
+    <svg class="bn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span class="bn-lb">Beranda</span>
+  </button>
+  <button class="bn-item" id="bn-order" data-tab="order" onclick="showTab('order')">
     <svg class="bn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
     <span class="bn-lb">Buat</span>
   </button>
-  <button class="bn-item" data-tab="list" onclick="showTab('list')">
+  <button class="bn-item" id="bn-list" data-tab="list" onclick="showTab('list')">
     <svg class="bn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><line x1="4.5" y1="6" x2="4.51" y2="6"/><line x1="4.5" y1="12" x2="4.51" y2="12"/><line x1="4.5" y1="18" x2="4.51" y2="18"/></svg>
     <span class="bn-lb" id="bn-list-lb">Order</span>
   </button>
@@ -927,6 +981,8 @@ let custAddrMap = {};   // { nama toko: alamat }
 let piutangMap = {};    // { NAMA TOKO (uppercase): {piutang, plafon} }
 let stockNum = {};      // { barang: angka } — hanya admin/stokist
 let stockAvail = {};    // { barang: true/false } — sales (Ada/Habis)
+let postsList = [];     // pengumuman Beranda
+let postImageData = ''; // dataURL foto terkompresi yang siap diunggah
 let usersList = [];
 let currentUser = null;   // { id, pin, role }
 let currentOrderId = null;
@@ -953,6 +1009,7 @@ function applyData(d) {
   piutangMap = d.piutangMap || {};
   stockNum = d.stockNum || {};
   stockAvail = d.stockAvail || {};
+  postsList = d.posts || [];
   usersList = d.users || [];
 }
 
@@ -1018,35 +1075,20 @@ function enterApp() {
   document.getElementById('app').style.display = 'block';
   document.getElementById('user-badge').textContent =
     currentUser.id + ' · ' + (ROLE_LABEL[currentUser.role] || currentUser.role);
-  document.getElementById('bottomnav').style.display = '';   // reset (bisa disembunyikan peran staff)
-  document.getElementById('page-info').classList.remove('active');
   applyRoleUI();
-  if (isStaffOnly()) { showInfoPage(); return; }
-  initForm();
-  showTab('order');
-}
-
-/* Peran stokist/penagihan: layar khusus menyusul — tampilkan landing netral */
-function showInfoPage() {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('bottomnav').style.display = 'none';
-  const pesan = currentUser.role === 'stokist'
-    ? 'Kelola stok barang langsung di <b>Google Sheet</b>, tab <b>Barang</b> (kolom <b>Stok</b>). Fitur stok khusus di aplikasi sedang disiapkan.'
-    : 'Fitur pencatatan pembayaran & daftar piutang untuk Anda sedang disiapkan (menyusul).';
-  const info = document.getElementById('page-info');
-  info.innerHTML = `<div class="card" style="text-align:center;">
-      <h2 style="justify-content:center;">Halo, ${esc(currentUser.id)}</h2>
-      <p style="color:var(--muted);font-size:11px;letter-spacing:0.8px;margin-bottom:12px;">${(ROLE_LABEL[currentUser.role]||'').toUpperCase()}</p>
-      <p style="color:var(--brand-dark);line-height:1.6;">${pesan}</p>
-    </div>`;
-  info.classList.add('active');
+  // Staf (stokist/penagihan) hanya melihat Beranda; menu order disembunyikan lewat applyRoleUI
+  if (!isStaffOnly()) initForm();
+  showTab('home');
 }
 
 /* Sembunyikan menu/tombol yang bukan untuk peran ini */
 function applyRoleUI() {
   const admin = isAdmin();
+  const staff = isStaffOnly();
   document.getElementById('tab-admin').classList.toggle('role-hidden', !admin);
   document.getElementById('bn-admin').classList.toggle('role-hidden', !admin);
+  document.getElementById('bn-order').classList.toggle('role-hidden', staff);
+  document.getElementById('bn-list').classList.toggle('role-hidden', staff);
   const exp = document.getElementById('export-btn');
   if (exp) exp.classList.toggle('role-hidden', !admin);
   const fs = document.getElementById('filter-sales');
@@ -1081,15 +1123,16 @@ function formatRp(n) {
 
 function showTab(t) {
   if (t === 'admin' && !isAdmin()) return;
+  if (isStaffOnly() && t !== 'home') return;   // staf hanya Beranda
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + t).classList.add('active');
-  const btnId = t === 'order' ? null : 'tab-' + t;
-  if (btnId) document.getElementById(btnId).classList.add('active');
-  else document.querySelector('.tab-btn').classList.add('active');
+  const tb = document.getElementById('tab-' + t);
+  if (tb) tb.classList.add('active');
   // Sinkronkan navigasi bawah (mobile)
   document.querySelectorAll('.bn-item').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
   window.scrollTo(0, 0);
+  if (t === 'home') renderHome();
   if (t === 'list') renderOrderList();
   if (t === 'admin') renderAdmin();
 }
@@ -1665,6 +1708,140 @@ async function removeUser(id) {
     renderUsersList();
     showToast('Akun dihapus.');
   } catch (e) { showToast('Gagal menghapus akun!', 'error'); console.error(e); }
+}
+
+/* ---------- Beranda (pengumuman) ---------- */
+function fmtPostDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return `${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)} ${d.getFullYear()} · ${String(d.getHours()).padStart(2,'0')}.${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function renderHome() {
+  document.getElementById('compose-card').style.display = isAdmin() ? '' : 'none';
+  const feed = document.getElementById('posts-feed');
+  let hint = '';
+  if (currentUser && currentUser.role === 'stokist') {
+    hint = `<div class="card"><p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0;">
+      Kelola stok barang di <b>Google Sheet</b>, tab <b>Barang</b> (kolom <b>Stok</b>). Fitur stok di aplikasi menyusul.</p></div>`;
+  } else if (currentUser && currentUser.role === 'penagihan') {
+    hint = `<div class="card"><p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0;">
+      Fitur pencatatan pembayaran & daftar piutang untuk Anda sedang disiapkan (menyusul).</p></div>`;
+  }
+  if (!postsList.length) {
+    feed.innerHTML = hint + '<div class="no-data">Belum ada pengumuman</div>';
+    return;
+  }
+  feed.innerHTML = hint + postsList.map(p => {
+    const img = p.imageId
+      ? `<img class="post-img" loading="lazy" alt="Foto pengumuman"
+           src="https://drive.google.com/thumbnail?id=${esc(p.imageId)}&sz=w1000">`
+      : '';
+    const adaHarga = Number(p.hargaJual) > 0, adaHpp = Number(p.hpp) > 0;
+    const prices = (adaHarga || adaHpp) ? `
+      <div class="post-prices">
+        ${adaHarga ? `<span class="price-chip">Harga jual <b>${formatRp(p.hargaJual)}</b></span>` : ''}
+        ${adaHpp ? `<span class="price-chip">HPP <b>${formatRp(p.hpp)}</b></span>` : ''}
+      </div>` : '';
+    const saveBtn = p.imageId
+      ? `<a class="btn btn-outline btn-sm" target="_blank" rel="noopener"
+           href="https://drive.google.com/uc?export=download&id=${esc(p.imageId)}">Simpan Foto</a>`
+      : '';
+    const delBtn = isAdmin()
+      ? `<button class="btn btn-danger btn-sm" onclick="deletePost('${esc(p.id)}')">Hapus</button>`
+      : '';
+    const actions = (saveBtn || delBtn) ? `<div class="post-actions">${saveBtn}${delBtn}</div>` : '';
+    return `
+    <div class="post-card">
+      <div class="post-head">${esc(p.author)} · ${fmtPostDate(p.createdAt)}</div>
+      ${p.text ? `<div class="post-text">${esc(p.text)}</div>` : ''}
+      ${img}${prices}${actions}
+    </div>`;
+  }).join('');
+}
+
+/* Kompres foto di HP sebelum diunggah (maks 1200px, JPEG) supaya cepat & hemat */
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          const k = Math.min(MAX / w, MAX / h);
+          w = Math.round(w * k); h = Math.round(h * k);
+        }
+        const cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        const out = cv.toDataURL('image/jpeg', 0.72);
+        if (!out || out.length < 100) reject(new Error('kompres gagal'));
+        else resolve(out);
+      };
+      img.onerror = () => reject(new Error('format tidak didukung'));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error('gagal membaca file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function onPostImage(inp) {
+  postImageData = '';
+  const prev = document.getElementById('post-preview');
+  prev.innerHTML = '';
+  const f = inp.files && inp.files[0];
+  if (!f) return;
+  try {
+    postImageData = await compressImage(f);
+    prev.innerHTML = `<img src="${postImageData}" class="post-img" style="max-height:180px;width:auto;">`;
+  } catch (e) {
+    showToast('Foto tidak bisa diproses — coba foto lain (JPG/PNG).', 'error');
+    inp.value = '';
+    console.error(e);
+  }
+}
+
+async function savePost() {
+  const text = document.getElementById('post-text').value.trim();
+  const hargaJual = document.getElementById('post-harga').value;
+  const hpp = document.getElementById('post-hpp').value;
+  if (!text && !postImageData) { showToast('Tulis pengumuman atau pilih foto dulu.', 'error'); return; }
+  const btn = document.getElementById('post-btn');
+  btn.disabled = true; btn.textContent = 'Mengunggah...';
+  try {
+    const r = await apiPost({ action: 'savePost', post: { text, hargaJual, hpp, imageBase64: postImageData } });
+    if (!r.ok) { showToast('Gagal memposting. Pastikan izin Drive backend sudah diaktifkan.', 'error'); return; }
+    document.getElementById('post-text').value = '';
+    document.getElementById('post-harga').value = '';
+    document.getElementById('post-hpp').value = '';
+    document.getElementById('post-image').value = '';
+    document.getElementById('post-preview').innerHTML = '';
+    postImageData = '';
+    await loadData();
+    renderHome();
+    showToast('Pengumuman terposting!');
+  } catch (e) {
+    showToast('Gagal memposting. Periksa koneksi.', 'error');
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Posting';
+  }
+}
+
+async function deletePost(id) {
+  if (!confirm('Hapus pengumuman ini?')) return;
+  try {
+    await apiPost({ action: 'deletePost', id });
+    await loadData();
+    renderHome();
+    showToast('Pengumuman dihapus.');
+  } catch (e) {
+    showToast('Gagal menghapus.', 'error');
+    console.error(e);
+  }
 }
 
 /* ---------- Cetak Nota ---------- */
