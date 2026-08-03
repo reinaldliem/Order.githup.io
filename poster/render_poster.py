@@ -148,25 +148,23 @@ SYARAT = [
     "Siap bekerja di bawah tekanan dan target",
     "Bersedia ditempatkan di Semarang, Salatiga, Ambarawa",
     "Diutamakan berdomisili di Semarang",
-    "Pendidikan minimal SMA / SMK sederajat",
-    "Memiliki SIM C dan kendaraan pribadi",
 ]
 
-fs = BODY(44)
-fn = MONO_B(30)
+fs = BODY(50)
+fn = MONO_B(32)
 sy = 1162
 for i, s in enumerate(SYARAT):
-    yy = U(sy + i * 70)
+    yy = U(sy + i * 82)
     d.text((LEFT, yy + U(9)), f"{i + 1:02d}", font=fn, fill=CLAY, anchor="la")
     d.text((LEFT + U(86), yy), s, font=fs, fill=INK, anchor="la")
     if i < len(SYARAT) - 1:
-        rule(d, LEFT + U(86), U(sy + i * 70 + 58), RIGHT, FAINT, 1)
+        rule(d, LEFT + U(86), U(sy + i * 82 + 66), RIGHT, FAINT, 1)
 
 
 # ============================================================================
 # V.  BENEFIT — carried on ink
 # ============================================================================
-BY0, BY1 = U(1762), U(2166)
+BY0, BY1 = U(1706), U(2150)
 d.rectangle([LEFT, BY0, RIGHT, BY1], fill=INK)
 
 track(d, (LEFT + U(56), BY0 + U(44)), "BENEFIT", MONO_B(34), PAPER, U(9))
@@ -180,10 +178,10 @@ BENEFIT = [
     "Jenjang karier & pelatihan produk",
 ]
 
-fbn = BODY(44)
+fbn = BODY(50)
 for i, b in enumerate(BENEFIT):
-    yy = BY0 + U(144) + i * U(60)
-    d.rectangle([LEFT + U(56), yy + U(22), LEFT + U(56) + U(30), yy + U(25)], fill=CLAY)
+    yy = BY0 + U(148) + i * U(68)
+    d.rectangle([LEFT + U(56), yy + U(25), LEFT + U(56) + U(34), yy + U(28)], fill=CLAY)
     d.text((LEFT + U(112), yy), b, font=fbn, fill=PAPER, anchor="la")
 
 
