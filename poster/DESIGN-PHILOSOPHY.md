@@ -1,4 +1,4 @@
-# LOAD-BEARING LIGHT
+# SITE SIGNAL
 ### A Visual Manifesto
 
 ---
@@ -13,7 +13,7 @@ The canvas is a section drawing — a cut taken through the world, revealing wha
 
 **II. Color and Material**
 
-The palette is quarried, never invented: fired clay, limestone dust, cold slate, the warm grey of cured mortar. Four tones at most, held in disciplined ratio — a vast field of pale mineral ground, an ink so deep it reads as shadow, and a single earthen red used with the restraint of a surgeon, marking only what must be found first. Color here is not mood. Color is *material honesty* — the pigment of the thing itself, weathered, matte, and free of gloss. Surfaces carry the faintest tooth of grain, the trace of pressure, the memory of a hand that pressed hard enough to matter. This calibration is painstaking work; the ratios must be tuned and re-tuned until the eye stops noticing them and simply trusts them.
+The palette is taken from the working site, never invented: the deep navy of steel in shadow, the cool grey of green concrete, the blue of galvanised scaffold, and one colour that exists purely to be seen — the yellow of a safety marker. Four tones held in disciplined ratio: a dark field with the authority of a site board, a pale mineral ground for everything that must be read, and the yellow spent like a warning light, never as decoration. This last tone earns its place only where attention must land — a number, a load, a call to act — and loses all its force the moment it is used twice too often. Contrast is engineered, not felt: light type on the dark field, dark type on the pale, and the marker yellow only ever against one of the two. This calibration is painstaking work; the ratios must be tuned and re-tuned until the eye stops noticing them and simply trusts them.
 
 **III. Scale and Rhythm**
 
